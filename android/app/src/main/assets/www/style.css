@@ -111,6 +111,8 @@ main::-webkit-scrollbar{width:0}
 .banner.show{display:flex}
 .banner .ficon{flex:none;margin-top:1px;font-size:18px}
 .banner b{font-weight:700}
+.banner.warn{background:var(--warn-tint);border-color:var(--warn);color:var(--warn-text)}
+.banner.warn .btn{margin-left:0}
 
 /* 适用范围提示横幅（Fluent InfoBar 风格；每次启动都显示，点 × 仅本次关闭） */
 .banner.scope{

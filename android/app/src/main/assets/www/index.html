@@ -52,6 +52,16 @@
       连接校园网 WiFi 后重新检测即可恢复。</div>
     </div>
 
+    <div class="banner warn" id="banner-hijack">
+      <span class="ficon" data-icon="warn"></span>
+      <div><b>检测到移动数据劫持 WiFi</b><br>
+      当前 WiFi（未认证）和移动数据同时开启，系统把流量导向了移动数据通道，
+      校园网检测可能误判、应用内登录也会失败。<br>
+      请在系统设置中关闭「移动数据」（保留 WiFi 开启），回到「检测」页重新诊断。
+      <button class="btn" data-goto-settings="cellular" style="margin-top:8px">去网络设置</button>
+      </div>
+    </div>
+
     <div class="hero" id="hero">
       <div class="progress" id="progress"><div class="bar"></div></div>
       <div class="glyph" id="hero-glyph"></div>

@@ -104,7 +104,7 @@ function installDemoApi() {
         type: "done",
         report: {
           ok: true, state: "ok", summary: "一切正常，校园网认证有效",
-          non_campus: false, no_ip: false, gateway_reachable: true, fail_count: 0, warn_count: 0,
+          non_campus: false, no_ip: false, cellular_hijack: false, gateway_reachable: true, fail_count: 0, warn_count: 0,
           gateway: "192.168.254.17",
           checks: demoChecks.map(c => Object.assign({ title: titles[c.key] }, c))
         }
@@ -229,6 +229,9 @@ function handleEvent(ev) {
         STATE.order.push(c.key);
       });
       renderChecks();
+      // 重新检测时先隐藏顶部警告条,等 done 事件根据结果再决定是否显示
+      $("#banner-noncampus").classList.remove("show");
+      $("#banner-hijack").classList.remove("show");
       break;
     }
     case "checkDone": {
@@ -303,6 +306,7 @@ function applyReport(r) {
       setHero("ok", esc(r.summary) + "。" + warnPart);
   }
   $("#banner-noncampus").classList.toggle("show", !!r.non_campus);
+  $("#banner-hijack").classList.toggle("show", !!r.cellular_hijack);
   updateLoginAvailability();
 }
 

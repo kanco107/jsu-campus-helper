@@ -118,20 +118,16 @@ class Engine(private val ctx: Context) {
     private fun checkConnection(ctx: Context, cfg: JSONObject): Pair<String, String> {
         val s = NetChecks.connectionState(ctx)
         if (s.status != "ok") return Pair(s.status, s.detail)
-        // 检测移动数据劫持 WiFi 场景,提示用户关闭移动数据
-        val hijack = NetChecks.isCellularHijackingWifi(ctx)
-        val hijackHint = if (hijack) {
-            "；检测到 WiFi 已连但流量被移动数据劫持，校园网检测可能误判,建议关闭移动数据后重试"
-        } else ""
         // 有网的话顺手 ping 一个域名，给用户直观的"网络正常"反馈
+        // 移动数据劫持提示已独立为顶部警告条,不再塞进本卡片,避免"绿色对勾+警告文字"造成误判
         val host = cfg.optString("public_test_host")
         val pr = Ping.ping(host, 2, 2)
         return if (pr.ok) {
-            Pair("ok", "${s.detail}；$host 可达（${pr.detail}）$hijackHint")
+            Pair("ok", "${s.detail}；$host 可达（${pr.detail}）")
         } else if (Ping.tcpProbe(host, 80)) {
-            Pair("ok", "${s.detail}；$host 可达（ICMP 被禁，TCP 端口确认）$hijackHint")
+            Pair("ok", "${s.detail}；$host 可达（ICMP 被禁，TCP 端口确认）")
         } else {
-            Pair("warn", "${s.detail}；但无法访问公网 $host（可能处于受限网络环境）$hijackHint")
+            Pair("warn", "${s.detail}；但无法访问公网 $host（可能处于受限网络环境）")
         }
     }
 
@@ -323,12 +319,17 @@ class Engine(private val ctx: Context) {
             else -> if (warnCount > 0) "一切正常（另有 $warnCount 项提醒）" else "一切正常，校园网认证有效"
         }
 
+        // 移动数据劫持 WiFi 检测:独立于 9 项检测,作为顶部警告条展示。
+        // 不放进 checkConnection 卡片,避免"绿色对勾+警告文字"造成误判。
+        val cellularHijack = NetChecks.isCellularHijackingWifi(ctx)
+
         return JSONObject()
             .put("ok", state == "ok")
             .put("state", state)
             .put("summary", summary)
             .put("non_campus", nonCampus)
             .put("no_ip", noIp)
+            .put("cellular_hijack", cellularHijack)
             .put("gateway_reachable", gwOk)
             .put("fail_count", failCount)
             .put("warn_count", warnCount)
