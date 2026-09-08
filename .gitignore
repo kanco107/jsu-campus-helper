@@ -1,0 +1,26 @@
+# 凭据(绝不入库)
+deploy_config.json
+
+# Android 签名密钥与凭据(绝不入库,公开仓库泄露会被用于伪造签名)
+android/keystore.properties
+android/*.jks
+android/*.keystore
+
+# 大体积可再下载的运行库(超 Gitee 50MB 单文件限,官网可下)
+windows/redist/
+
+# Python 运行产物
+__pycache__/
+*.pyc
+
+# Android 构建产物与本机配置
+android/.gradle/
+android/app/build/
+android/local.properties
+
+# 本地缓存(ghub_sync.py 的 blob 哈希缓存,无需入库)
+.ghub_blob_cache.json
+
+# 系统杂项
+.DS_Store
+Thumbs.db
