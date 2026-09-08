@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title id="page-title">校园网助手 · 吉首大学</title>
+<meta name="description" id="page-desc" content="">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<style>
+:root{
+  --bg:#f5f6f8; --bg-card:#ffffff; --bg-soft:#eef0f4; --bg-dark:#0b0e14;
+  --text:#1a1a1a; --text-2:#5b6068; --text-3:#8b919b;
+  --brand:#0078d4; --brand-2:#106ebe; --brand-soft:#e5f1fb;
+  --accent:#00bcf2; --accent-soft:#e0f6ff;
+  --success:#107c10; --success-soft:#e6f3e6;
+  --warn:#f0a500; --warn-soft:#fff6e0;
+  --danger:#c50f1f; --danger-soft:#fde8e9;
+  --stroke:#e3e5ea; --stroke-2:#d2d6de;
+  --stroke-strong:#b3b8c2;
+  --radius-sm:6px; --radius:10px; --radius-lg:16px; --radius-xl:24px;
+  --shadow-2:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow-4:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
+  --shadow-8:0 12px 32px rgba(0,0,0,.10),0 4px 12px rgba(0,0,0,.06);
+  --shadow-brand:0 8px 24px rgba(0,120,212,.28);
+  --font:'Segoe UI','Microsoft YaHei UI','PingFang SC','Noto Sans SC',system-ui,-apple-system,sans-serif;
+  --mono:'Cascadia Code','Consolas','SF Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+html,body{overflow-x:clip}
+body{
+  margin:0; font-family:var(--font); color:var(--text); background:var(--bg);
+  line-height:1.65; -webkit-font-smoothing:antialiased; font-size:16px;
+}
+h1,h2,h3,h4,h5{margin:0 0 .4em; font-weight:640; line-height:1.25; letter-spacing:-.01em}
+p{margin:0 0 .5em}
+a{color:var(--brand); text-decoration:none}
+a:hover{text-decoration:underline}
+img{max-width:100%; display:block}
+
+.container{max-width:1140px; margin:0 auto; padding:0 24px}
+.section{padding:72px 0}
+.section--tight{padding:48px 0}
+.eyebrow{
+  display:inline-block; font-size:12px; font-weight:600; letter-spacing:.08em;
+  color:var(--brand); background:var(--brand-soft); padding:4px 12px;
+  border-radius:99px; margin-bottom:12px; text-transform:uppercase;
+}
+.eyebrow--accent{color:var(--accent); background:var(--accent-soft)}
+.eyebrow--success{color:var(--success); background:var(--success-soft)}
+.eyebrow--warn{color:var(--warn); background:var(--warn-soft)}
+.section-title{font-size:30px; font-weight:660}
+.section-sub{
+  color:var(--text-2); font-size:16px; max-width:680px; margin-top:4px;
+}
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:12px 24px; font-size:15px; font-weight:600; font-family:inherit;
+  border-radius:var(--radius-sm); border:1px solid transparent; cursor:pointer;
+  transition:all .18s ease; text-decoration:none; line-height:1.2;
+  min-width:140px;
+}
+.btn--primary{background:var(--brand); color:#fff; box-shadow:var(--shadow-brand)}
+.btn--primary:hover{background:var(--brand-2); text-decoration:none; transform:translateY(-1px)}
+.btn--accent{background:var(--accent); color:#fff}
+.btn--accent:hover{background:#00a3d9; text-decoration:none}
+.btn--outline{background:transparent; border-color:var(--stroke-strong); color:var(--text)}
+.btn--outline:hover{background:var(--bg-card); border-color:var(--brand); color:var(--brand); text-decoration:none}
+.btn--block{width:100%}
+.btn--lg{padding:14px 28px; font-size:16px; min-width:180px}
+.btn--sm{padding:8px 16px; font-size:13px; min-width:auto}
+.btn-row{display:flex; gap:12px; flex-wrap:wrap}
+
+/* 导航 */
+.nav{
+  position:sticky; top:0; z-index:100; background:rgba(245,246,248,.82);
+  backdrop-filter:blur(16px) saturate(1.4); -webkit-backdrop-filter:blur(16px) saturate(1.4);
+  border-bottom:1px solid var(--stroke);
+}
+.nav-inner{display:flex; align-items:center; justify-content:space-between; padding:14px 0}
+.brand{display:flex; align-items:center; gap:10px; font-weight:680; font-size:18px; color:var(--text)}
+.brand img{width:32px; height:32px; border-radius:var(--radius-sm)}
+.brand-tag{font-size:12px; color:var(--text-2); font-weight:500; margin-left:6px; padding:2px 8px; background:var(--bg-soft); border-radius:4px}
+.nav-links{display:flex; gap:4px; align-items:center}
+.nav-links a{
+  padding:8px 14px; border-radius:var(--radius-sm); font-size:14px; font-weight:500;
+  color:var(--text-2);
+}
+.nav-links a:hover{background:var(--bg-soft); color:var(--text); text-decoration:none}
+.nav-cta{display:flex; gap:8px}
+@media(max-width:780px){.nav-links{display:none}}
+
+/* Hero */
+.hero{
+  padding:64px 0 56px;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,120,212,.10), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 90% 30%, rgba(0,188,242,.08), transparent 70%),
+    var(--bg);
+}
+.hero-grid{display:grid; grid-template-columns:1.1fr .9fr; gap:48px; align-items:center}
+.hero-text h1{font-size:48px; font-weight:680; margin-bottom:16px}
+.hero-text .lead{font-size:18px; color:var(--text-2); margin-bottom:28px; max-width:540px}
+.hero-cta{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:24px}
+.hero-meta{display:flex; gap:20px; flex-wrap:wrap; font-size:13px; color:var(--text-3)}
+.hero-meta span{display:inline-flex; align-items:center; gap:6px}
+.hero-meta i{width:8px; height:8px; border-radius:50%; background:var(--success); display:inline-block}
+
+.hero-card{
+  background:var(--bg-card); border:1px solid var(--stroke); border-radius:var(--radius-xl);
+  box-shadow:var(--shadow-8); padding:24px; position:relative; overflow:hidden;
+}
+.hero-card::before{
+  content:""; position:absolute; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg,var(--brand),var(--accent));
+}
+.hero-card h3{font-size:18px; margin-bottom:4px}
+.hero-card .sub{font-size:13px; color:var(--text-3); margin-bottom:18px}
+.platform-tabs{display:flex; gap:0; margin-bottom:16px; border-bottom:1px solid var(--stroke)}
+.platform-tab{
+  padding:10px 18px; font-size:14px; font-weight:600; color:var(--text-2);
+  cursor:pointer; border-bottom:2px solid transparent; transition:all .15s;
+  background:none; border-left:0; border-right:0; border-top:0; font-family:inherit;
+}
+.platform-tab.is-active{color:var(--brand); border-bottom-color:var(--brand)}
+.platform-pane{display:none}
+.platform-pane.is-active{display:block; animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+.spec-list{list-style:none; padding:0; margin:0 0 20px; font-size:14px}
+.spec-list li{
+  display:flex; justify-content:space-between; padding:8px 0;
+  border-bottom:1px dashed var(--stroke); color:var(--text-2);
+}
+.spec-list li:last-child{border-bottom:none}
+.spec-list b{color:var(--text); font-weight:600}
+.spec-list .file-size{color:var(--text-3); font-family:var(--mono); font-size:12px}
+
+/* Hero 截图叠加展示(背景图 + 边缘淡化) */
+.hero-shots{position:relative}
+.shot-stack{position:relative; padding:10px 6px 30px; animation:shot-float 6s ease-in-out infinite}
+@keyframes shot-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.shot-layer{
+  position:absolute; inset:0; background-size:cover; background-position:top center;
+  background-repeat:no-repeat; border-radius:14px; transition:opacity .9s ease;
+}
+.shot-dark{opacity:0}
+.shot-stack.is-dark .shot-light{opacity:0}
+.shot-stack.is-dark .shot-dark{opacity:1}
+.shot-win{
+  position:relative; width:100%; aspect-ratio:984/741; border-radius:14px;
+  box-shadow:0 18px 44px rgba(11,14,20,.16);
+  -webkit-mask-image:
+    linear-gradient(to bottom, #000 0 64%, transparent 98%),
+    linear-gradient(to right, transparent 0, #000 10% 90%, transparent 100%);
+  -webkit-mask-composite:source-in;
+  mask-image:
+    linear-gradient(to bottom, #000 0 64%, transparent 98%),
+    linear-gradient(to right, transparent 0, #000 10% 90%, transparent 100%);
+  mask-composite:intersect;
+}
+.shot-android{
+  position:absolute; right:0; bottom:-10px; z-index:2;
+  height:72%; aspect-ratio:900/1924;
+  border-radius:26px; border:6px solid #171a21;
+  box-shadow:0 20px 46px rgba(11,14,20,.28);
+  -webkit-mask-image:linear-gradient(to bottom, #000 0 74%, transparent 98%);
+  mask-image:linear-gradient(to bottom, #000 0 74%, transparent 98%);
+}
+.shot-android .shot-layer{border-radius:20px}
+.shot-tag{
+  position:absolute; top:12px; left:12px; z-index:3;
+  font-size:11.5px; font-weight:600; color:#fff; background:rgba(23,26,33,.72);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  padding:3px 10px; border-radius:99px; letter-spacing:.02em;
+}
+.shot-android .shot-tag{top:10px; left:10px; font-size:10.5px; padding:2px 8px}
+.shot-hint{text-align:center; font-size:12.5px; color:var(--text-3); margin:18px 0 0}
+
+@media(max-width:880px){
+  .hero-grid{grid-template-columns:1fr; gap:32px}
+  .hero-text h1{font-size:36px}
+  .hero-text .lead{font-size:16px}
+  .shot-stack{max-width:380px; margin:0 auto; padding:6px 4px 18px}
+  .shot-android{bottom:4px; border-width:5px; border-radius:20px}
+  .shot-android .shot-layer{border-radius:15px}
+}
+
+/* Feature */
+.feature-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:36px}
+.feature-card{
+  background:var(--bg-card); border:1px solid var(--stroke); border-radius:var(--radius-lg);
+  padding:24px; box-shadow:var(--shadow-2); transition:all .22s ease; position:relative;
+}
+.feature-card:hover{transform:translateY(-3px); box-shadow:var(--shadow-4); border-color:var(--stroke-2)}
+.feature-card .icon-wrap{
+  width:44px; height:44px; border-radius:var(--radius); display:flex;
+  align-items:center; justify-content:center; margin-bottom:14px;
+}
+.feature-card h3{font-size:17px; margin-bottom:6px}
+.feature-card p{font-size:14px; color:var(--text-2); margin:0}
+.icon-brand{background:var(--brand-soft); color:var(--brand)}
+.icon-accent{background:var(--accent-soft); color:var(--accent)}
+.icon-success{background:var(--success-soft); color:var(--success)}
+.icon-warn{background:var(--warn-soft); color:var(--warn)}
+.icon-danger{background:var(--danger-soft); color:var(--danger)}
+
+@media(max-width:880px){.feature-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.feature-grid{grid-template-columns:1fr}}
+
+/* 检测项 */
+.check-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:32px}
+.check-card{
+  background:var(--bg-card); border:1px solid var(--stroke); border-radius:var(--radius);
+  padding:18px; box-shadow:var(--shadow-2); text-align:center; transition:all .2s;
+}
+.check-card:hover{border-color:var(--brand); transform:translateY(-2px)}
+.check-card .num{
+  font-size:22px; font-weight:680; color:var(--brand); margin-bottom:6px;
+  font-variant-numeric:tabular-nums;
+}
+.check-card .name{font-size:14px; font-weight:600; margin-bottom:2px}
+.check-card .desc{font-size:12px; color:var(--text-3); margin:0; line-height:1.5}
+@media(max-width:980px){.check-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.check-grid{grid-template-columns:1fr 1fr}}
+
+/* 平台对比 —— 修复:卡片整体撑高,foot 自动贴底 */
+.compare-grid{display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:36px}
+.compare-card{
+  background:var(--bg-card); border:1px solid var(--stroke); border-radius:var(--radius-lg);
+  overflow:hidden; box-shadow:var(--shadow-2);
+  display:flex; flex-direction:column;          /* 关键 */
+}
+.compare-card header{
+  padding:20px 24px; border-bottom:1px solid var(--stroke);
+  display:flex; align-items:center; gap:12px;
+  flex-shrink:0;
+}
+.compare-card header h3{font-size:18px; margin:0}
+.compare-card .badge{
+  font-size:11px; padding:3px 8px; border-radius:4px; font-weight:600;
+  background:var(--brand-soft); color:var(--brand);
+}
+.compare-card .badge--accent{background:var(--accent-soft); color:var(--accent)}
+.compare-card .body{
+  padding:20px 24px;
+  flex:1 1 auto;                                 /* 关键:撑高 body 把 foot 推到底 */
+}
+.compare-card ul{list-style:none; padding:0; margin:0}
+.compare-card li{
+  padding:8px 0 8px 28px; position:relative; font-size:14px; color:var(--text-2);
+  border-bottom:1px dashed var(--stroke);
+}
+.compare-card li:last-child{border-bottom:none}
+.compare-card li::before{
+  content:"✓"; position:absolute; left:0; top:8px; color:var(--success);
+  font-weight:700; font-size:14px;
+}
+.compare-card li.is-no::before{content:"—"; color:var(--text-3); font-weight:400}
+.compare-card .foot{
+  padding:16px 24px; background:var(--bg-soft); border-top:1px solid var(--stroke);
+  font-size:13px; color:var(--text-2);
+  flex-shrink:0;
+}
+@media(max-width:880px){.compare-grid{grid-template-columns:1fr}}
+
+/* 步骤 */
+.steps{display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin-top:36px}
+.step-card{
+  background:var(--bg-card); border:1px solid var(--stroke); border-radius:var(--radius-lg);
+  padding:24px; box-shadow:var(--shadow-2); position:relative;
+}
+.step-card .step-num{
+  position:absolute; top:-14px; left:24px; width:32px; height:32px;
+  background:var(--brand); color:#fff; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:15px; box-shadow:var(--shadow-2);
+}
+.step-card h3{font-size:16px; margin:8px 0 6px}
+.step-card p{font-size:14px; color:var(--text-2); margin:0}
+@media(max-width:780px){.steps{grid-template-columns:1fr}}
+
+/* FAQ */
+.faq-list{max-width:760px; margin:32px auto 0}
+.faq-item{
+  background:var(--bg-card); border:1px solid var(--stroke); border-radius:var(--radius);
+  margin-bottom:10px; overflow:hidden;
+}
+.faq-q{
+  padding:16px 20px; display:flex; justify-content:space-between; align-items:center;
+  cursor:pointer; font-weight:600; font-size:15px; user-select:none;
+}
+.faq-q:hover{background:var(--bg-soft)}
+.faq-q .chev{transition:transform .2s; color:var(--text-3); font-size:14px}
+.faq-item.is-open .chev{transform:rotate(180deg)}
+.faq-a{display:none; padding:0 20px 16px; font-size:14px; color:var(--text-2); line-height:1.7}
+.faq-item.is-open .faq-a{display:block; animation:fadeIn .25s}
+
+/* CTA + 联系方式 */
+.cta-band{
+  background:linear-gradient(135deg,var(--brand) 0%,var(--accent) 100%);
+  border-radius:var(--radius-xl); padding:48px; color:#fff; text-align:center;
+  box-shadow:var(--shadow-8); position:relative; overflow:hidden;
+}
+.cta-band::before{
+  content:""; position:absolute; inset:0; opacity:.1;
+  background:radial-gradient(circle at 20% 30%, #fff 0%, transparent 50%),
+             radial-gradient(circle at 80% 70%, #fff 0%, transparent 50%);
+}
+.cta-band h2{font-size:30px; margin-bottom:10px; position:relative}
+.cta-band p{font-size:16px; opacity:.92; margin-bottom:28px; position:relative}
+
+.contact-grid{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px;
+  max-width:760px; margin:0 auto; position:relative;
+}
+.contact-card{
+  background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25);
+  border-radius:var(--radius); padding:18px; color:#fff;
+  text-decoration:none; transition:all .2s; backdrop-filter:blur(6px);
+}
+.contact-card:hover{
+  background:rgba(255,255,255,.22); transform:translateY(-2px); text-decoration:none;
+  border-color:rgba(255,255,255,.5);
+}
+.contact-card .contact-icon{
+  width:36px; height:36px; border-radius:var(--radius-sm);
+  background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center;
+  margin:0 auto 10px;
+}
+.contact-card .contact-label{font-size:12px; opacity:.8; margin-bottom:2px}
+.contact-card .contact-value{font-size:15px; font-weight:600; word-break:break-all}
+@media(max-width:780px){.contact-grid{grid-template-columns:1fr}}
+
+/* Footer */
+.footer{background:var(--bg-dark); color:#9ba1ab; padding:40px 0; font-size:13px}
+.footer-grid{display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:32px}
+.footer h4{color:#fff; font-size:14px; margin-bottom:14px; font-weight:600}
+.footer a{color:#9ba1ab; display:block; padding:4px 0; font-size:13px}
+.footer a:hover{color:#fff; text-decoration:none}
+.footer .brand img{filter:brightness(0) invert(1)}
+.footer-bottom{
+  margin-top:32px; padding-top:20px; border-top:1px solid #2a2f38;
+  text-align:center;
+}
+@media(max-width:780px){.footer-grid{grid-template-columns:1fr 1fr}}
+
+/* 警告条 */
+.warn-banner{
+  background:var(--danger-soft); border:1px solid #f3c6c9; color:#a01418;
+  border-radius:var(--radius); padding:14px 18px; display:flex; gap:12px;
+  align-items:flex-start; margin:24px 0; font-size:14px;
+}
+.warn-banner .icon{flex-shrink:0; font-size:18px; line-height:1.4}
+
+.text-center{text-align:center}
+.text-2{color:var(--text-2)}
+.muted{color:var(--text-3)}
+.kbd{
+  font-family:var(--mono); font-size:12px; background:var(--bg-soft);
+  padding:2px 6px; border-radius:4px; border:1px solid var(--stroke);
+}
+.mono{font-family:var(--mono); font-size:13px}
+
+/* ===== 网盘下载弹窗 ===== */
+.nd-overlay{
+  position:fixed; inset:0; background:rgba(11,14,20,.45);
+  backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
+  display:none; align-items:center; justify-content:center;
+  z-index:9999; padding:16px;
+}
+.nd-overlay.is-open{display:flex}
+.nd-modal{
+  background:var(--bg-card); border-radius:14px; box-shadow:var(--shadow-8);
+  width:100%; max-width:440px; padding:24px 26px;
+  animation:nd-pop .18s ease-out;
+}
+@keyframes nd-pop{from{opacity:0; transform:translateY(14px) scale(.97)}to{opacity:1; transform:none}}
+.nd-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:4px}
+.nd-head h3{margin:0; font-size:17px}
+.nd-close{
+  border:none; background:var(--bg-soft); width:30px; height:30px;
+  border-radius:50%; font-size:16px; line-height:1; cursor:pointer; color:var(--text-2);
+}
+.nd-close:hover{background:#e2e5ea; color:var(--text)}
+.nd-sub{font-size:12.5px; color:var(--text-3); margin:0 0 12px}
+.nd-row{
+  display:flex; align-items:flex-start; gap:10px; padding:9px 0;
+  border-bottom:1px solid var(--bg-soft); font-size:14px;
+}
+.nd-row:last-of-type{border-bottom:none}
+.nd-label{flex:0 0 48px; color:var(--text-3); font-size:12.5px; padding-top:2px}
+.nd-url{color:var(--accent); word-break:break-all; text-decoration:none}
+.nd-url:hover{text-decoration:underline}
+.nd-code-wrap{display:flex; align-items:center; gap:8px}
+.nd-code-wrap code{
+  font-family:var(--mono); background:var(--bg-soft); padding:3px 10px;
+  border-radius:6px; font-weight:600; letter-spacing:1px;
+}
+.nd-hint{
+  font-size:12.5px; color:var(--text-2); line-height:1.7;
+  background:var(--bg-soft); border-radius:8px; padding:10px 12px; margin:14px 0;
+}
+.nd-actions{display:flex; justify-content:flex-end; gap:10px}
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script src="data.js?v=1.2.1"></script>
+<script>
+/* ============================================================
+   渲染:从 window.SITE_DATA 动态构建整页
+   ============================================================ */
+const D = window.SITE_DATA || {};
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const ICONS = {
+  // 功能卡片
+  brand:  '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>',
+  success:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2 2 0 1 1-2.8-2.8l6.9-6.9a6 6 0 0 1 7.9-7.9l-3.8 3.8z"/></svg>',
+  warn:   '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>',
+  accent: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="14" r="4"/><path d="M11 11l8-8"/><path d="M16.5 5.5L19 8"/><path d="M14 8l2.5 2.5"/></svg>',
+  danger: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+  // 联系方式
+  chat:   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+  mail:   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>',
+  github: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.2 1.9 1.2 1.1 1.9 2.9 1.4 3.6 1 .1-.8.4-1.4.8-1.7-2.6-.3-5.4-1.3-5.4-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 5 18.3 5.3 18.3 5.3c.6 1.7.2 2.9.1 3.2.8.8 1.2 1.8 1.2 3.1 0 4.4-2.8 5.4-5.4 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z"/></svg>',
+  globe: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z"/></svg>',
+  // 平台
+  win:    '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="1.6"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>',
+  android:'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M12 18h.01"/></svg>'
+};
+
+function renderNav(){
+  const nav = D.nav || {};
+  const links = (nav.links || []).map(l => `<a href="${esc(l.href)}">${esc(l.label)}</a>`).join('');
+  return `
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="#top" class="brand">
+        <img src="assets/logo.png" alt="logo">
+        <span>${esc(D.meta?.brand || '校园网助手')}</span>
+        <span class="brand-tag">${esc(D.meta?.brandTag || '')}</span>
+      </a>
+      <div class="nav-links">${links}</div>
+      <div class="nav-cta">
+        <a href="#download" class="btn btn--primary btn--sm">${esc(nav.ctaText || '下载')}</a>
+      </div>
+    </div>
+  </nav>`;
+}
+
+function renderHero(){
+  const h = D.hero || {};
+  const meta = (h.meta || []).map(m => `<span><i></i> ${esc(m)}</span>`).join('');
+  return `
+  <header class="hero" id="top">
+    <div class="container hero-grid">
+      <div class="hero-text">
+        <span class="eyebrow">${esc(h.eyebrow || '')}</span>
+        <h1>${h.title ? h.title.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&lt;br&gt;/g, '<br>') : ''}</h1>
+        <p class="lead">${esc(h.lead || '')}</p>
+        <div class="hero-cta">
+          <a href="${esc(h.primaryBtn?.href || '#download')}" class="btn btn--primary btn--lg">${esc(h.primaryBtn?.text || '下载')}</a>
+          <a href="${esc(h.secondaryBtn?.href || '#features')}" class="btn btn--outline btn--lg">${esc(h.secondaryBtn?.text || '看功能')}</a>
+        </div>
+        <div class="hero-meta">${meta}</div>
+      </div>
+      ${renderHeroShots()}
+    </div>
+  </header>`;
+}
+
+function renderHeroShots(){
+  return `
+    <div class="hero-shots">
+      <div class="shot-stack" id="shot-stack">
+        <div class="shot-win">
+          <div class="shot-layer shot-light" style="background-image:url('assets/shots/win-light.webp')" role="img" aria-label="Windows 版界面 · 亮色主题"></div>
+          <div class="shot-layer shot-dark" style="background-image:url('assets/shots/win-dark.webp')" role="img" aria-label="Windows 版界面 · 暗色主题"></div>
+          <span class="shot-tag">Windows</span>
+        </div>
+        <div class="shot-android">
+          <div class="shot-layer shot-light" style="background-image:url('assets/shots/android-light.webp')" role="img" aria-label="Android 版界面 · 亮色主题"></div>
+          <div class="shot-layer shot-dark" style="background-image:url('assets/shots/android-dark.webp')" role="img" aria-label="Android 版界面 · 暗色主题"></div>
+          <span class="shot-tag">Android</span>
+        </div>
+      </div>
+      <p class="shot-hint">亮 / 暗主题自动切换 · 点击下方「下载」获取安装包</p>
+    </div>`;
+}
+
+function renderFeatures(){
+  const f = D.features || {};
+  const items = (f.items || []).map(it => `
+    <div class="feature-card">
+      <div class="icon-wrap icon-${esc(it.icon || 'brand')}">${ICONS[it.icon] || ICONS.brand}</div>
+      <h3>${esc(it.title)}</h3>
+      <p>${esc(it.desc)}</p>
+    </div>`).join('');
+  return `
+  <section class="section" id="features">
+    <div class="container">
+      <div class="text-center">
+        <span class="eyebrow">${esc(f.eyebrow || '')}</span>
+        <h2 class="section-title">${esc(f.title || '')}</h2>
+      </div>
+      <div class="feature-grid">${items}</div>
+    </div>
+  </section>`;
+}
+
+function renderChecks(){
+  const c = D.checks || {};
+  const eb = c.eyebrowStyle ? `eyebrow eyebrow--${esc(c.eyebrowStyle)}` : 'eyebrow';
+  const items = (c.items || []).map(it => `
+    <div class="check-card">
+      <div class="num">${esc(it.num)}</div>
+      <div class="name">${esc(it.name)}</div>
+      <p class="desc">${esc(it.desc)}</p>
+    </div>`).join('');
+  return `
+  <section class="section" id="checks" style="background:var(--bg-card);border-top:1px solid var(--stroke);border-bottom:1px solid var(--stroke)">
+    <div class="container">
+      <div class="text-center">
+        <span class="${eb}">${esc(c.eyebrow || '')}</span>
+        <h2 class="section-title">${esc(c.title || '')}</h2>
+      </div>
+      <div class="check-grid">${items}</div>
+    </div>
+  </section>`;
+}
+
+function renderCompare(){
+  const c = D.compare || {};
+  const cards = (c.cards || []).map(card => {
+    const badgeCls = card.badgeStyle === 'accent' ? 'badge badge--accent' : 'badge';
+    const lis = (card.features || []).map(f => {
+      const text = typeof f === 'string' ? f : f.text;
+      const disabled = typeof f === 'object' && f.disabled ? ' is-no' : '';
+      return `<li class="${disabled}">${esc(text)}</li>`;
+    }).join('');
+    return `
+      <div class="compare-card">
+        <header>
+          ${card.title === 'Windows 桌面版' ? ICONS.win : ICONS.android}
+          <h3>${esc(card.title)}</h3>
+          <span class="${badgeCls}">${esc(card.badge)}</span>
+        </header>
+        <div class="body"><ul>${lis}</ul></div>
+        <div class="foot">${esc(card.foot)}</div>
+      </div>`;
+  }).join('');
+  return `
+  <section class="section" id="compare">
+    <div class="container">
+      <div class="text-center">
+        <span class="eyebrow">${esc(c.eyebrow || '')}</span>
+        <h2 class="section-title">${esc(c.title || '')}</h2>
+        <p class="section-sub" style="margin:8px auto 0">${esc(c.subtitle || '')}</p>
+      </div>
+      <div class="compare-grid">${cards}</div>
+    </div>
+  </section>`;
+}
+
+function renderSteps(){
+  const s = D.steps || {};
+  const eb = s.eyebrowStyle ? `eyebrow eyebrow--${esc(s.eyebrowStyle)}` : 'eyebrow';
+  const items = (s.items || []).map(it => `
+    <div class="step-card">
+      <div class="step-num">${esc(it.num)}</div>
+      <h3>${esc(it.title)}</h3>
+      <p>${esc(it.desc)}</p>
+    </div>`).join('');
+  return `
+  <section class="section" style="background:var(--bg-card);border-top:1px solid var(--stroke);border-bottom:1px solid var(--stroke)">
+    <div class="container">
+      <div class="text-center">
+        <span class="${eb}">${esc(s.eyebrow || '')}</span>
+        <h2 class="section-title">${esc(s.title || '')}</h2>
+      </div>
+      <div class="steps">${items}</div>
+    </div>
+  </section>`;
+}
+
+function renderDownload(){
+  const d = D.download || {};
+  const cards = (d.cards || []).map(card => {
+    const style = card.btnStyle === 'accent' ? 'btn--accent' : 'btn--primary';
+    const lis = (card.specs || []).map(s => `<li>${esc(s)}</li>`).join('');
+    const icon = card.title === 'Windows 桌面版' ? ICONS.win : ICONS.android;
+    const key = card.title.includes('Windows') ? 'windows' : 'android';
+    let ndBtn = '';
+    if(card.netdisk){
+      ND_REGISTRY[key] = card.netdisk;
+      ndBtn = `<button type="button" class="btn btn--outline btn--sm" data-netdisk="${key}">网盘下载</button>`;
+    }
+    return `
+      <div class="compare-card">
+        <header>${icon}<h3>${esc(card.title)}</h3></header>
+        <div class="body">
+          <p style="font-size:14px;color:var(--text-2);margin-bottom:14px">${esc(card.intro)}</p>
+          <ul>${lis}</ul>
+        </div>
+        <div class="foot" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+          <span>${esc(card.fileName)}</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            ${ndBtn}
+            <a href="${esc(card.downloadUrl || '#')}" class="btn ${style} btn--sm" data-dl="${esc(card.fileName)}">${esc(card.btnText)}</a>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+  const warn = d.warnBanner ? `
+    <div class="warn-banner">
+      <span class="icon">${esc(d.warnBanner.icon)}</span>
+      <div>${d.warnBanner.html}</div>
+    </div>` : '';
+  return `
+  <section class="section" id="download">
+    <div class="container">
+      <div class="text-center">
+        <span class="eyebrow">${esc(d.eyebrow || '')}</span>
+        <h2 class="section-title">${esc(d.title || '')}</h2>
+      </div>
+      <div class="compare-grid" style="margin-top:36px">${cards}</div>
+      ${warn}
+    </div>
+  </section>`;
+}
+
+function renderFaq(){
+  const f = D.faq || {};
+  const items = (f.items || []).map((it, i) => `
+    <div class="faq-item" data-idx="${i}">
+      <div class="faq-q">${esc(it.q)}<span class="chev">▾</span></div>
+      <div class="faq-a">${esc(it.a)}</div>
+    </div>`).join('');
+  return `
+  <section class="section" id="faq">
+    <div class="container">
+      <div class="text-center">
+        <span class="eyebrow">${esc(f.eyebrow || '')}</span>
+        <h2 class="section-title">${esc(f.title || '')}</h2>
+      </div>
+      <div class="faq-list">${items}</div>
+    </div>
+  </section>`;
+}
+
+function renderCta(){
+  const c = D.cta || {};
+  const contacts = (c.contacts || []).map(co => {
+    const icon = ICONS[co.icon] || ICONS.chat;
+    const ext = /^https?:/i.test(co.href || '') ? ' target="_blank" rel="noopener"' : '';
+    return `
+      <a href="${esc(co.href || '#')}"${ext} class="contact-card">
+        <div class="contact-icon">${icon}</div>
+        <div class="contact-label">${esc(co.label)}</div>
+        <div class="contact-value">${esc(co.value)}</div>
+      </a>`;
+  }).join('');
+  return `
+  <section class="section--tight" id="cta">
+    <div class="container">
+      <div class="cta-band">
+        <h2>${esc(c.title || '')}</h2>
+        <p>${esc(c.subtitle || '')}</p>
+        <div class="contact-grid">${contacts}</div>
+      </div>
+    </div>
+  </section>`;
+}
+
+function renderFooter(){
+  const f = D.footer || {};
+  const cols = (f.columns || []).map(col => `
+    <div>
+      <h4>${esc(col.title)}</h4>
+      ${(col.links || []).map(l => `<a href="${esc(l.href)}">${esc(l.label)}</a>`).join('')}
+    </div>`).join('');
+  return `
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="brand" style="color:#fff;margin-bottom:10px">
+            <img src="assets/logo.png" alt="logo" style="filter:brightness(0) invert(1)">
+            <span>${esc(D.meta?.brand || '校园网助手')}</span>
+          </div>
+        </div>
+        ${cols}
+      </div>
+      <div class="footer-bottom">
+        <span>${esc(f.copyright || '© 2026')}</span>
+      </div>
+    </div>
+  </footer>`;
+}
+
+/* ===== 网盘下载弹窗 ===== */
+var ND_REGISTRY = {};
+function renderNetdiskModal(){
+  return `
+  <div class="nd-overlay" id="nd-overlay">
+    <div class="nd-modal" role="dialog" aria-modal="true" aria-labelledby="nd-title">
+      <div class="nd-head">
+        <h3 id="nd-title">网盘下载</h3>
+        <button type="button" class="nd-close" id="nd-close" aria-label="关闭">&times;</button>
+      </div>
+      <p class="nd-sub">通过网盘获取安装包,需登录网盘账号,输入访问码后下载。</p>
+      <div class="nd-row">
+        <span class="nd-label">链接</span>
+        <a class="nd-url" id="nd-url" href="#" target="_blank" rel="noopener"></a>
+      </div>
+      <div class="nd-row">
+        <span class="nd-label">访问码</span>
+        <span class="nd-code-wrap"><code id="nd-code"></code><button type="button" class="btn btn--outline btn--sm" id="nd-copy">复制</button></span>
+      </div>
+      <div class="nd-hint">点击链接打开网盘分享页,输入访问码即可下载;GitHub 直链较慢时推荐用网盘。</div>
+      <div class="nd-actions">
+        <button type="button" class="btn btn--outline btn--sm" id="nd-cancel">关闭</button>
+        <a class="btn btn--primary btn--sm" id="nd-go" href="#" target="_blank" rel="noopener">打开网盘页面</a>
+      </div>
+    </div>
+  </div>`;
+}
+function openNetdisk(key){
+  const nd = ND_REGISTRY[key];
+  if(!nd || !nd.url) return;
+  document.getElementById('nd-title').textContent = '网盘下载 · ' + (nd.label || '天翼云盘');
+  const u = document.getElementById('nd-url');
+  u.href = nd.url; u.textContent = nd.url;
+  document.getElementById('nd-code').textContent = nd.code || '无';
+  document.getElementById('nd-go').href = nd.url;
+  document.getElementById('nd-overlay').classList.add('is-open');
+}
+function closeNetdisk(){
+  document.getElementById('nd-overlay').classList.remove('is-open');
+}
+
+/* ===== 绑定交互 ===== */
+function bindInteractions(){
+  // Hero 截图亮/暗主题自动交替(悬停暂停,移开恢复)
+  const stack = document.getElementById('shot-stack');
+  if(stack){
+    let dark = false, timer = null;
+    const tick = () => {
+      dark = !dark;
+      stack.classList.toggle('is-dark', dark);
+    };
+    const start = () => { if(timer === null) timer = setInterval(tick, 3600); };
+    const stop = () => { if(timer !== null){ clearInterval(timer); timer = null; } };
+    stack.addEventListener('mouseenter', stop);
+    stack.addEventListener('mouseleave', start);
+    start();
+  }
+  // 平台切换
+  document.querySelectorAll('.platform-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const platform = tab.dataset.platform;
+      document.querySelectorAll('.platform-tab').forEach(t => t.classList.toggle('is-active', t === tab));
+      document.querySelectorAll('.platform-pane').forEach(p => p.classList.toggle('is-active', p.dataset.pane === platform));
+    });
+  });
+  // FAQ 折叠
+  document.querySelectorAll('.faq-q').forEach(q => {
+    q.addEventListener('click', () => {
+      const item = q.parentElement;
+      const wasOpen = item.classList.contains('is-open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('is-open'));
+      if(!wasOpen) item.classList.add('is-open');
+    });
+  });
+  // 网盘下载弹窗
+  document.querySelectorAll('[data-netdisk]').forEach(btn => {
+    btn.addEventListener('click', () => openNetdisk(btn.dataset.netdisk));
+  });
+  const ndOv = document.getElementById('nd-overlay');
+  if(ndOv){
+    ndOv.addEventListener('click', e => { if(e.target === ndOv) closeNetdisk(); });
+    document.getElementById('nd-close').addEventListener('click', closeNetdisk);
+    document.getElementById('nd-cancel').addEventListener('click', closeNetdisk);
+    const cp = document.getElementById('nd-copy');
+    cp.addEventListener('click', () => {
+      const code = document.getElementById('nd-code').textContent;
+      if(navigator.clipboard){
+        navigator.clipboard.writeText(code).then(() => {
+          cp.textContent = '已复制';
+          setTimeout(() => { cp.textContent = '复制'; }, 1500);
+        });
+      }
+    });
+    document.addEventListener('keydown', e => {
+      if(e.key === 'Escape' && ndOv.classList.contains('is-open')) closeNetdisk();
+    });
+  }
+  // 下载链接(占位)
+  document.querySelectorAll('[data-dl]').forEach(el => {
+    const href = el.getAttribute('href');
+    if(!href || href === '#'){
+      el.addEventListener('click', e => {
+        e.preventDefault();
+        alert('下载链接即将上线\n文件:' + el.dataset.dl + '\n\n在 admin.html 里填写 downloadUrl 后生效。');
+      });
+    }
+  });
+}
+
+/* ===== 主入口 ===== */
+function render(){
+  // 元信息
+  if(D.meta){
+    document.title = D.meta.title || document.title;
+    const desc = document.getElementById('page-desc');
+    if(desc && D.meta.description) desc.setAttribute('content', D.meta.description);
+  }
+  // 拼装
+  const root = document.getElementById('root');
+  if(!root) return;
+  ND_REGISTRY = {};
+  root.innerHTML =
+    renderNav() +
+    renderHero() +
+    renderFeatures() +
+    renderChecks() +
+    renderCompare() +
+    renderSteps() +
+    renderDownload() +
+    renderFaq() +
+    renderCta() +
+    renderFooter();
+  document.body.insertAdjacentHTML('beforeend', renderNetdiskModal());
+  bindInteractions();
+}
+
+document.addEventListener('DOMContentLoaded', render);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,19 @@
+# Cloudflare Pages 缓存策略
+# HTML 入口与 data.js：禁止存储，保证用户始终拿到最新版
+# 静态资源：带内容哈希，可长期缓存
+
+/
+  Cache-Control: no-store, no-cache, must-revalidate
+
+/*.html
+  Cache-Control: no-store, no-cache, must-revalidate
+
+/data.js
+  Cache-Control: no-cache
+
+/admin.html
+  Cache-Control: no-store, no-cache, must-revalidate
+
+# 图片/CSS 等静态资源长期缓存（Cloudflare Pages 按内容哈希命名，更新即新文件）
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

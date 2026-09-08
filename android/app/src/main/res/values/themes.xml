@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 零依赖主题：框架自带 DayNight 自动深浅色，无 ActionBar（标题栏由 HTML 自绘） -->
+    <style name="AppTheme" parent="@android:style/Theme.DeviceDefault.DayNight">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <!-- targetSdk 36+ 强制 edge-to-edge：透明系统栏，WebView 内容延伸到栏下，
+             HTML 层用 safe-area-inset 处理避让 -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>校园网助手官网 · 内容管理</title>
+<link rel="icon" type="image/png" href="assets/logo.png">
+<style>
+:root{
+  --bg:#f5f6f8; --bg-card:#fff; --bg-soft:#eef0f4; --bg-dark:#0b0e14;
+  --text:#1a1a1a; --text-2:#5b6068; --text-3:#8b919b;
+  --brand:#0078d4; --brand-2:#106ebe; --brand-soft:#e5f1fb;
+  --accent:#00bcf2; --success:#107c10; --success-soft:#e6f3e6;
+  --warn:#f0a500; --warn-soft:#fff6e0;
+  --danger:#c50f1f; --danger-soft:#fde8e9;
+  --stroke:#e3e5ea; --stroke-2:#d2d6de;
+  --radius-sm:6px; --radius:10px; --radius-lg:16px;
+  --shadow-2:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow-4:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
+  --font:'Segoe UI','Microsoft YaHei UI','PingFang SC',system-ui,sans-serif;
+  --mono:'Cascadia Code','Consolas',monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0; font-family:var(--font); background:var(--bg); color:var(--text); font-size:14px; line-height:1.6}
+h1,h2,h3,h4{margin:0 0 .4em; font-weight:640; line-height:1.25}
+p{margin:0 0 .5em}
+a{color:var(--brand); text-decoration:none}
+
+/* 顶栏 */
+.topbar{
+  position:sticky; top:0; z-index:100;
+  background:var(--bg-dark); color:#fff;
+  padding:12px 24px; display:flex; align-items:center; justify-content:space-between;
+  box-shadow:0 2px 8px rgba(0,0,0,.2); flex-wrap:wrap; gap:12px;
+}
+.topbar h1{font-size:16px; margin:0; color:#fff}
+.topbar .sub{font-size:12px; color:#9ba1ab; margin:0}
+.topbar-actions{display:flex; gap:8px; flex-wrap:wrap}
+
+.btn{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:8px 14px; font-size:13px; font-weight:600; font-family:inherit;
+  border-radius:var(--radius-sm); border:1px solid transparent; cursor:pointer;
+  transition:all .15s; line-height:1.2;
+}
+.btn:disabled{opacity:.5; cursor:not-allowed}
+.btn--primary{background:var(--brand); color:#fff}
+.btn--primary:hover:not(:disabled){background:var(--brand-2)}
+.btn--success{background:var(--success); color:#fff}
+.btn--success:hover:not(:disabled){background:#0a6808}
+.btn--outline{background:transparent; border-color:rgba(255,255,255,.4); color:#fff}
+.btn--outline:hover:not(:disabled){background:rgba(255,255,255,.12); border-color:#fff}
+.btn--ghost{background:transparent; color:#9ba1ab; border-color:#3a4049}
+.btn--ghost:hover:not(:disabled){color:#fff; background:rgba(255,255,255,.08)}
+.btn--sm{padding:6px 10px; font-size:12px}
+.btn--danger{background:var(--danger); color:#fff}
+.btn--danger:hover:not(:disabled){background:#a00c18}
+
+/* 布局 */
+.layout{display:grid; grid-template-columns:220px 1fr; min-height:calc(100vh - 60px)}
+.sidebar{
+  background:var(--bg-card); border-right:1px solid var(--stroke);
+  padding:16px 0; position:sticky; top:60px; height:calc(100vh - 60px); overflow-y:auto;
+}
+.sidebar a{
+  display:block; padding:10px 20px; font-size:13px; font-weight:500;
+  color:var(--text-2); border-left:3px solid transparent;
+}
+.sidebar a:hover{background:var(--bg-soft); color:var(--text); text-decoration:none}
+.sidebar a.is-active{color:var(--brand); border-left-color:var(--brand); background:var(--brand-soft)}
+.main{padding:24px 32px; max-width:1000px; width:100%}
+@media(max-width:780px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{position:static; height:auto; display:flex; overflow-x:auto; padding:8px}
+  .sidebar a{border-left:0; border-bottom:3px solid transparent; white-space:nowrap; padding:8px 14px}
+  .sidebar a.is-active{border-bottom-color:var(--brand); border-left:0}
+  .main{padding:16px}
+}
+
+/* 区段 */
+.section-block{
+  background:var(--bg-card); border:1px solid var(--stroke); border-radius:var(--radius-lg);
+  margin-bottom:20px; box-shadow:var(--shadow-2); overflow:hidden;
+}
+.section-block > header{
+  padding:14px 20px; background:var(--bg-soft); border-bottom:1px solid var(--stroke);
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.section-block > header h2{font-size:15px; margin:0}
+.section-block > header .hint{font-size:12px; color:var(--text-3)}
+.section-block > .body{padding:16px 20px}
+
+/* 字段 */
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field > label{
+  display:block; font-size:12px; font-weight:600; color:var(--text-2);
+  margin-bottom:4px; letter-spacing:.02em;
+}
+.field > label .path{
+  font-family:var(--mono); font-size:11px; color:var(--text-3); margin-left:6px;
+  background:var(--bg-soft); padding:1px 5px; border-radius:3px;
+}
+.input, .textarea{
+  width:100%; padding:8px 10px; font-family:inherit; font-size:13px;
+  border:1px solid var(--stroke); border-radius:var(--radius-sm);
+  background:#fff; color:var(--text); transition:border-color .15s;
+}
+.input:focus, .textarea:focus{outline:none; border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-soft)}
+.textarea{min-height:64px; resize:vertical; line-height:1.5}
+.input--mono{font-family:var(--mono); font-size:12px}
+
+/* 数组项 */
+.array-item{
+  border:1px solid var(--stroke); border-radius:var(--radius-sm);
+  padding:12px; margin-bottom:10px; background:var(--bg-soft);
+}
+.array-item-header{
+  display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;
+}
+.array-item-header .idx{
+  font-size:12px; font-weight:600; color:var(--text-3);
+  font-family:var(--mono); background:#fff; padding:2px 8px; border-radius:3px;
+  border:1px solid var(--stroke);
+}
+.array-item-actions{display:flex; gap:4px}
+.array-add{
+  display:flex; justify-content:center; padding:8px;
+  border:1px dashed var(--stroke-2); border-radius:var(--radius-sm);
+  margin-top:6px; cursor:pointer; color:var(--text-2); font-size:13px;
+  transition:all .15s;
+}
+.array-add:hover{border-color:var(--brand); color:var(--brand); background:var(--brand-soft)}
+
+/* 子对象嵌套 */
+.subobject{
+  border-left:2px solid var(--stroke); padding-left:12px; margin-left:4px;
+}
+
+/* Toast */
+.toast{
+  position:fixed; bottom:24px; right:24px; z-index:1000;
+  padding:12px 20px; border-radius:var(--radius-sm); color:#fff;
+  font-size:14px; font-weight:500; box-shadow:var(--shadow-4);
+  opacity:0; transform:translateY(10px); transition:all .25s; pointer-events:none;
+}
+.toast.is-show{opacity:1; transform:none}
+.toast--success{background:var(--success)}
+.toast--error{background:var(--danger)}
+.toast--info{background:var(--brand)}
+
+/* 状态指示 */
+.status-dot{
+  display:inline-block; width:8px; height:8px; border-radius:50%;
+  background:var(--text-3); margin-right:6px;
+}
+.status-dot--saved{background:var(--success)}
+.status-dot--dirty{background:var(--warn)}
+
+/* 模式提示 banner */
+.mode-banner{
+  background:var(--warn-soft); border:1px solid #f3d6a0; color:#8a5e00;
+  padding:10px 16px; border-radius:var(--radius-sm); font-size:13px; margin-bottom:16px;
+}
+.mode-banner b{color:#5e3f00}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>校园网助手 · 内容管理</h1>
+    <p class="sub">开发者专用 · 编辑后保存到 data.js · 主页自动渲染</p>
+  </div>
+  <div class="topbar-actions">
+    <span id="status" style="font-size:12px;color:#9ba1ab"><span class="status-dot" id="status-dot"></span><span id="status-text">未修改</span></span>
+    <button class="btn btn--ghost btn--sm" id="btn-reload">重新加载</button>
+    <button class="btn btn--outline btn--sm" id="btn-preview" title="新窗口打开主页">预览主页</button>
+    <button class="btn btn--outline btn--sm" id="btn-export">导出 data.js</button>
+    <button class="btn btn--success btn--sm" id="btn-save">保存到服务器</button>
+  </div>
+</div>
+
+<div id="mode-banner-container"></div>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main" id="main"></main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="data.js"></script>
+<script>
+/* ============================================================
+   内容管理页 · 递归渲染 + 保存到 data.js
+   ============================================================ */
+"use strict";
+
+let working = null;        // 当前编辑中的数据(深拷贝自 SITE_DATA)
+let dirty = false;
+let serverAvailable = false;
+
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+/* ---------- 工具 ---------- */
+function deepClone(o){ return JSON.parse(JSON.stringify(o)) }
+function toast(msg, type='info'){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast toast--' + type + ' is-show';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('is-show'), 2400);
+}
+function setDirty(v){
+  dirty = v;
+  $('#status-dot').className = 'status-dot ' + (v ? 'status-dot--dirty' : 'status-dot--saved');
+  $('#status-text').textContent = v ? '有未保存修改' : '已保存';
+}
+
+/* ---------- 分组定义(侧边栏跳转锚点) ---------- */
+const SECTIONS = [
+  { key: 'meta',     label: '站点信息',   path: ['meta'] },
+  { key: 'nav',      label: '导航',       path: ['nav'] },
+  { key: 'hero',     label: 'Hero 首屏',  path: ['hero'] },
+  { key: 'heroCard', label: '下载卡',     path: ['heroCard'] },
+  { key: 'features', label: '功能区',     path: ['features'] },
+  { key: 'checks',   label: '检测项',     path: ['checks'] },
+  { key: 'compare',  label: '平台对比',    path: ['compare'] },
+  { key: 'steps',    label: '使用步骤',   path: ['steps'] },
+  { key: 'download', label: '下载区',     path: ['download'] },
+  { key: 'faq',      label: 'FAQ',        path: ['faq'] },
+  { key: 'cta',      label: '联系方式',   path: ['cta'] },
+  { key: 'footer',   label: 'Footer',     path: ['footer'] }
+];
+
+/* ---------- 取值/写值(支持 a.b.c 路径,数组用 [i]) ---------- */
+function getByPath(obj, path){
+  let cur = obj;
+  for(const k of path){
+    if(cur == null) return undefined;
+    cur = cur[k];
+  }
+  return cur;
+}
+function setByPath(obj, path, val){
+  let cur = obj;
+  for(let i = 0; i < path.length - 1; i++){
+    const k = path[i];
+    if(cur[k] == null) cur[k] = /^\d+$/.test(String(path[i+1])) ? [] : {};
+    cur = cur[k];
+  }
+  cur[path[path.length-1]] = val;
+}
+
+/* ---------- 递归渲染编辑器 ---------- */
+function renderField(value, path, label){
+  const id = 'f_' + path.map((p,i) => i === 0 ? p : (typeof p === 'number' ? '_' + p : p)).join('_');
+  if(typeof value === 'boolean'){
+    return `<div class="field">
+      <label>${esc(label)} <span class="path">${esc(path.join('.'))}</span></label>
+      <select class="input" data-path="${esc(path.join('.'))}" id="${id}">
+        <option value="true" ${value?'selected':''}>true</option>
+        <option value="false" ${!value?'selected':''}>false</option>
+      </select>
+    </div>`;
+  }
+  if(typeof value === 'number'){
+    return `<div class="field">
+      <label>${esc(label)} <span class="path">${esc(path.join('.'))}</span></label>
+      <input class="input" type="number" value="${esc(value)}" data-path="${esc(path.join('.'))}" id="${id}">
+    </div>`;
+  }
+  // 字符串
+  if(typeof value === 'string'){
+    const multiline = value.includes('\n') || value.length > 80 || value.includes('<');
+    const cls = multiline ? 'textarea' : 'input';
+    const tag = multiline ? 'textarea' : 'input';
+    if(multiline){
+      return `<div class="field">
+        <label>${esc(label)} <span class="path">${esc(path.join('.'))}</span></label>
+        <textarea class="${cls}" data-path="${esc(path.join('.'))}" id="${id}">${esc(value)}</textarea>
+      </div>`;
+    }
+    return `<div class="field">
+      <label>${esc(label)} <span class="path">${esc(path.join('.'))}</span></label>
+      <input class="${cls}" value="${esc(value)}" data-path="${esc(path.join('.'))}" id="${id}">
+    </div>`;
+  }
+  if(Array.isArray(value)){
+    return renderArray(value, path, label);
+  }
+  if(value && typeof value === 'object'){
+    return renderObject(value, path, label);
+  }
+  return '';
+}
+
+function renderObject(obj, path, label){
+  const fields = Object.keys(obj).map(k => {
+    const subPath = path.concat([k]);
+    return renderField(obj[k], subPath, k);
+  }).join('');
+  return `<div class="subobject">${fields}</div>`;
+}
+
+function renderArray(arr, path, label){
+  const items = arr.map((item, i) => {
+    const subPath = path.concat([i]);
+    let inner;
+    if(item && typeof item === 'object'){
+      inner = renderObject(item, subPath, label);
+    } else {
+      inner = renderField(item, subPath, String(i));
+    }
+    return `<div class="array-item" data-idx="${i}">
+      <div class="array-item-header">
+        <span class="idx">#${i}</span>
+        <div class="array-item-actions">
+          <button class="btn btn--ghost btn--sm" data-action="up" data-path="${esc(path.join('.'))}" data-idx="${i}">↑</button>
+          <button class="btn btn--ghost btn--sm" data-action="down" data-path="${esc(path.join('.'))}" data-idx="${i}">↓</button>
+          <button class="btn btn--danger btn--sm" data-action="del" data-path="${esc(path.join('.'))}" data-idx="${i}">删</button>
+        </div>
+      </div>
+      ${inner}
+    </div>`;
+  }).join('');
+  return `<div class="field">
+    <label>${esc(label)} <span class="path">${esc(path.join('.'))}</span> <span style="color:var(--text-3);font-weight:400">(${arr.length} 项)</span></label>
+    ${items}
+    <div class="array-add" data-action="add" data-path="${esc(path.join('.'))}">+ 添加一项</div>
+  </div>`;
+}
+
+/* ---------- 整个分组的区块 ---------- */
+function renderSection(sec){
+  const data = getByPath(working, sec.path);
+  if(data == null) return '';
+  let inner;
+  if(Array.isArray(data)){
+    // 顶层就是数组(不太可能,但兜底)
+    inner = renderArray(data, sec.path, sec.label);
+  } else if(typeof data === 'object'){
+    inner = Object.keys(data).map(k => renderField(data[k], sec.path.concat([k]), k)).join('');
+  } else {
+    inner = renderField(data, sec.path, sec.label);
+  }
+  return `<section class="section-block" id="sec-${esc(sec.key)}">
+    <header>
+      <h2>${esc(sec.label)}</h2>
+      <span class="hint">${esc(sec.path.join('.'))}</span>
+    </header>
+    <div class="body">${inner}</div>
+  </section>`;
+}
+
+/* ---------- 渲染整页 ---------- */
+function renderAll(){
+  // 侧边栏
+  $('#sidebar').innerHTML = SECTIONS.map(s =>
+    `<a href="#sec-${esc(s.key)}" data-sec="${esc(s.key)}">${esc(s.label)}</a>`
+  ).join('');
+  // 主区
+  $('#main').innerHTML = SECTIONS.map(renderSection).join('');
+  bindEdits();
+}
+
+/* ---------- 绑定编辑事件 ---------- */
+function bindEdits(){
+  // 字段输入
+  $$('.input, .textarea').forEach(el => {
+    const event = el.tagName === 'TEXTAREA' ? 'input' : 'input';
+    el.addEventListener(event, () => {
+      const path = el.dataset.path.split('.');
+      const val = el.type === 'number' ? Number(el.value) : el.value;
+      setByPath(working, path, val);
+      setDirty(true);
+    });
+  });
+  // 数组操作
+  $$('[data-action]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const action = btn.dataset.action;
+      const path = btn.dataset.path.split('.').map(p => /^\d+$/.test(p) ? Number(p) : p);
+      const idx = btn.dataset.idx !== undefined ? Number(btn.dataset.idx) : -1;
+      handleArrayAction(action, path, idx);
+    });
+  });
+}
+
+function handleArrayAction(action, path, idx){
+  let arr = getByPath(working, path);
+  if(!Array.isArray(arr)){
+    // 兜底:如果路径末端是 undefined,初始化数组
+    setByPath(working, path, []);
+    arr = getByPath(working, path);
+  }
+  if(action === 'add'){
+    // 复制最后一项作模板,否则用空对象/空串
+    let tmpl;
+    if(arr.length){
+      tmpl = deepClone(arr[arr.length - 1]);
+      // 清空可能的标识字段(留作模板避免空值)
+    } else {
+      tmpl = {};
+    }
+    arr.push(tmpl);
+    setDirty(true);
+    renderAll();
+    toast('已添加,记得填字段', 'info');
+  } else if(action === 'del'){
+    if(!confirm('删除第 ' + idx + ' 项?')) return;
+    arr.splice(idx, 1);
+    setDirty(true);
+    renderAll();
+    toast('已删除', 'info');
+  } else if(action === 'up'){
+    if(idx <= 0) return;
+    [arr[idx-1], arr[idx]] = [arr[idx], arr[idx-1]];
+    setDirty(true);
+    renderAll();
+  } else if(action === 'down'){
+    if(idx >= arr.length - 1) return;
+    [arr[idx+1], arr[idx]] = [arr[idx], arr[idx+1]];
+    setDirty(true);
+    renderAll();
+  }
+}
+
+/* ---------- 序列化为 data.js 文本 ---------- */
+function serialize(){
+  const json = JSON.stringify(working, null, 2);
+  // 转义脚本结束标签,防止提前终止 HTML 解析(见下方 replace)
+  const safe = json.replace(/<\/script>/g, '<\\/script>');
+  return `/* ============================================================
+   校园网助手官网 · 内容数据
+   由 admin.html 生成 · ${new Date().toLocaleString('zh-CN')}
+   ============================================================ */
+window.SITE_DATA = ${safe};
+`;
+}
+
+/* ---------- 保存到服务器(POST /save) ---------- */
+async function saveToServer(){
+  const btn = $('#btn-save');
+  btn.disabled = true;
+  btn.textContent = '保存中...';
+  try{
+    const text = serialize();
+    const r = await fetch('/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: text })
+    });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const msg = await r.text();
+    setDirty(false);
+    toast('已保存到 data.js', 'success');
+    serverAvailable = true;
+    updateModeBanner();
+  }catch(e){
+    serverAvailable = false;
+    updateModeBanner();
+    toast('保存失败:' + e.message + '\n请改用"导出 data.js"手动覆盖', 'error');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = '保存到服务器';
+  }
+}
+
+/* ---------- 导出 data.js(下载) ---------- */
+function exportFile(){
+  const text = serialize();
+  const blob = new Blob([text], { type: 'text/javascript;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'data.js';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('已下载 data.js,请覆盖网站目录里的同名文件', 'info');
+}
+
+/* ---------- 探测本地服务器 ---------- */
+async function probeServer(){
+  try{
+    const r = await fetch('/save', { method: 'OPTIONS' });
+    serverAvailable = (r.status === 200 || r.status === 204 || r.status === 405);
+  }catch{
+    serverAvailable = false;
+  }
+  updateModeBanner();
+}
+
+function updateModeBanner(){
+  const c = $('#mode-banner-container');
+  if(serverAvailable){
+    c.innerHTML = `<div class="mode-banner">
+      <b>✓ 服务器模式:</b> 检测到本地 server.py 运行中,点"保存到服务器"会直接写回 data.js,主页刷新即可见。
+    </div>`;
+  }else{
+    c.innerHTML = `<div class="mode-banner">
+      <b>纯前端模式:</b> 未检测到 server.py。改完点"导出 data.js"下载,手动覆盖网站目录里的 data.js 即可。如需直接保存,运行 <code>python server.py</code> 后再打开本页。
+    </div>`;
+  }
+}
+
+/* ---------- 重新加载 ---------- */
+function reload(){
+  if(dirty && !confirm('有未保存的修改,确定重新加载?')) return;
+  working = deepClone(window.SITE_DATA);
+  setDirty(false);
+  renderAll();
+  toast('已重新加载', 'info');
+}
+
+/* ---------- 工具 ---------- */
+function esc(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------- 侧边栏高亮 ---------- */
+function setupSidebarHighlight(){
+  const links = $$('.sidebar a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        const id = e.target.id.replace('sec-', '');
+        links.forEach(a => a.classList.toggle('is-active', a.dataset.sec === id));
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  $$('section[id^="sec-"]').forEach(s => observer.observe(s));
+}
+
+/* ---------- 初始化 ---------- */
+function init(){
+  working = deepClone(window.SITE_DATA || {});
+  renderAll();
+  setupSidebarHighlight();
+  probeServer();
+
+  $('#btn-save').addEventListener('click', saveToServer);
+  $('#btn-export').addEventListener('click', exportFile);
+  $('#btn-reload').addEventListener('click', reload);
+  $('#btn-preview').addEventListener('click', () => window.open('index.html', '_blank'));
+
+  // 离开提醒
+  window.addEventListener('beforeunload', e => {
+    if(dirty){ e.preventDefault(); e.returnValue = ''; }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>

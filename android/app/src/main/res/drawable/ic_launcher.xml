@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 启动图标：Fluent 风格圆角方块 + WiFi 波纹（矢量，无需位图） -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 背景：圆角方块，Fluent 蓝 -->
+    <path
+        android:fillColor="#0F6CBD"
+        android:pathData="M12,0 h84 a12,12 0 0,1 12,12 v84 a12,12 0 0,1 -12,12 h-84 a12,12 0 0,1 -12,-12 v-84 a12,12 0 0,1 12,-12 z" />
+    <!-- WiFi 波纹外弧 -->
+    <path
+        android:pathData="M32,54 a30,30 0 0,1 44,0"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="7"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <!-- WiFi 波纹内弧 -->
+    <path
+        android:pathData="M41,64 a18,18 0 0,1 26,0"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="7"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <!-- 圆点 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M49,75 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0" />
+</vector>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>校园网助手</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 108 108" aria-hidden="true">
+      <path fill="#0F6CBD" d="M12,0 h84 a12,12 0 0,1 12,12 v84 a12,12 0 0,1 -12,12 h-84 a12,12 0 0,1 -12,-12 v-84 a12,12 0 0,1 12,-12 z"/>
+      <path d="M32,54 a30,30 0 0,1 44,0" stroke="#fff" stroke-width="7" stroke-linecap="round" fill="none"/>
+      <path d="M41,64 a18,18 0 0,1 26,0" stroke="#fff" stroke-width="7" stroke-linecap="round" fill="none"/>
+      <path fill="#fff" d="M49,75 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0"/>
+    </svg>
+    <span>校园网助手</span>
+  </div>
+  <div class="head-right">
+    <span class="chip demo">演示模式</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ================= 检测（首页） ================= -->
+  <section class="view active" id="view-home">
+    <div class="banner scope" id="banner-scope">
+      <span class="scope-badge ficon" data-icon="info"></span>
+      <div class="scope-body">
+        <div class="scope-head">
+          <b>适用范围</b>
+          <button class="close-btn" id="btnScopeClose" title="关闭" aria-label="关闭">×</button>
+        </div>
+        <div class="scope-text">本工具仅适用于<b>宿舍区校园网</b>（WiFi 名称含 <span class="kw" id="scopeKeyword">DORM</span> 字段，具体名称以宿舍楼内实际为准）；教学楼、图书馆等<b>公共区域</b>校园网 <span class="kw alt">JSU-WLAN</span> 不在范围内，请按信息中心教程连接。</div>
+        <div class="scope-links">
+          <span class="scope-links-label">公共区域校园网教程</span>
+          <span class="scope-link-row">
+            <a class="link-btn" href="#" data-url="https://nic.jsu.edu.cn/fwzn/wljr/cysz/ee4c8a1479144ac2af2b814e37c316ce.htm"><span class="ficon" data-icon="external"></span>入网图文教程</a>
+            <a class="link-btn" href="#" data-url="https://nic.jsu.edu.cn/xwgg/tzgg/227b7dfe9e4741f99e6918b8c37c7a98.htm"><span class="ficon" data-icon="external"></span>新生网络指南</a>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="banner" id="banner-noncampus">
+      <span class="ficon" data-icon="alert"></span>
+      <div><b>当前不在校园网环境</b><br>
+      无法连通校园网网关，登录功能已停用（避免在移动数据下误操作）。
+      连接校园网 WiFi 后重新检测即可恢复。</div>
+    </div>
+
+    <div class="hero" id="hero">
+      <div class="progress" id="progress"><div class="bar"></div></div>
+      <div class="glyph" id="hero-glyph"></div>
+      <h1 id="hero-title">开始诊断</h1>
+      <p id="hero-sub">点击下方按钮检测网络与校园网认证状态。本工具仅做检测，不会修改你的手机设置。</p>
+      <div class="actions">
+        <button class="btn primary" id="btn-detect"></button>
+      </div>
+    </div>
+
+    <div class="grid" id="checks">
+      <div class="card wait" data-check="placeholder">
+        <div class="top"><span class="ficon" data-icon="info"></span><span class="title">等待检测</span></div>
+        <span class="pill wait">待机</span>
+        <div class="detail">点击「一键检测」后，这里会逐项显示 9 项检测结果。</div>
+      </div>
+    </div>
+
+    <div class="logcard">
+      <div class="head"><span class="ficon" data-icon="log"></span>运行日志</div>
+      <div id="log"></div>
+    </div>
+  </section>
+
+  <!-- ================= 登录 ================= -->
+  <section class="view" id="view-login">
+    <div class="note info" id="auth-line">
+      <span class="ficon" data-icon="shield"></span>
+      <div id="auth-line-text">尚未查询认证状态，点击下方按钮查询。</div>
+    </div>
+
+    <div class="formcard">
+      <h2><span class="ficon" data-icon="key"></span>校园网认证登录</h2>
+      <div class="field">
+        <label for="f-account">学号 / 账号</label>
+        <input id="f-account" type="text" placeholder="例如 2023123456" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="f-password">密码</label>
+        <input id="f-password" type="password" placeholder="校园网密码（通常与信息门户一致）">
+      </div>
+      <div class="field">
+        <label for="f-carrier">运营商线路</label>
+        <select id="f-carrier">
+          <option value="cmcc">中国移动</option>
+          <option value="ctcc">中国电信</option>
+          <option value="cucc">中国联通</option>
+        </select>
+      </div>
+      <div class="checkline">
+        <input type="checkbox" id="f-remember">
+        <label for="f-remember">记住密码（保存在本机）</label>
+      </div>
+      <button class="btn primary block" id="btn-login">登 录</button>
+    </div>
+
+    <div class="note" id="login-result">
+      <span class="ficon" data-icon="info"></span>
+      <div id="login-result-text"></div>
+    </div>
+
+    <button class="btn block" id="btn-portal">在浏览器打开认证页</button>
+  </section>
+
+  <!-- ================= 引导 ================= -->
+  <section class="view" id="view-guide">
+    <div class="note info">
+      <span class="ficon" data-icon="info"></span>
+      <div>安卓版不做任何系统修改。以下为常见校园网问题的手动处理指引，点击每项展开步骤。</div>
+    </div>
+
+    <details class="acc" id="acc-proxy">
+      <summary><span class="ficon" data-icon="proxy"></span>关闭系统代理
+        <span class="chev" data-icon="chev"></span></summary>
+      <div class="body">
+        检测卡片「系统代理」出现黄色警告时，代理/加速软件的残留设置会导致"登录成功却打不开网页"。
+        <ol>
+          <li>部分机型：设置 → WLAN → 长按当前网络 → 修改网络 → 代理 → 选择「无」</li>
+          <li>检查是否开启了 VPN / 加速器类应用，将其关闭</li>
+        </ol>
+        <button class="btn" data-goto-settings="proxy">去网络设置</button>
+      </div>
+    </details>
+
+    <details class="acc">
+      <summary><span class="ficon" data-icon="wifi"></span>忘记并重连 WiFi
+        <span class="chev" data-icon="chev"></span></summary>
+      <div class="body">
+        适用于获取到 169.254.x.x 地址（DHCP 失败）或始终无法连通网关的情况。
+        <ol>
+          <li>设置 → WLAN → 长按当前校园网 SSID → 忘记网络</li>
+          <li>重新点击该 SSID 并输入密码连接</li>
+          <li>连接后回到「检测」页重新诊断</li>
+        </ol>
+        <button class="btn" data-goto-settings="wifi">去 WLAN 设置</button>
+      </div>
+    </details>
+
+    <details class="acc">
+      <summary><span class="ficon" data-icon="globe"></span>打开认证页面登录
+        <span class="chev" data-icon="chev"></span></summary>
+      <div class="body">
+        App 内登录失败时，可在浏览器中直接打开认证页面手动登录（页面会自动弹出或访问认证服务器地址）。
+        <ol>
+          <li>连接校园网 WiFi（不认证时打开任何网页通常自动跳转认证页）</li>
+          <li>或点击下方按钮直接打开认证服务器页面</li>
+        </ol>
+        <button class="btn" id="btn-portal-2">打开认证页</button>
+      </div>
+    </details>
+
+    <details class="acc">
+      <summary><span class="ficon" data-icon="shield"></span>检查应用网络权限
+        <span class="chev" data-icon="chev"></span></summary>
+      <div class="body">
+        Android 17 及以上系统会默认禁止应用访问局域网。若内网相关检测全部失败且提示被拦截：
+        <ol>
+          <li>设置 → 应用 → 校园网助手 → 权限</li>
+          <li>允许「本地网络」权限</li>
+          <li>回到「检测」页重新诊断</li>
+        </ol>
+        <button class="btn" data-goto-settings="app">去应用权限</button>
+      </div>
+    </details>
+  </section>
+
+  <!-- ================= 设置 ================= -->
+  <section class="view" id="view-settings">
+    <div class="formcard">
+      <h2><span class="ficon" data-icon="gear"></span>检测参数</h2>
+      <div class="field">
+        <label for="s-gateway">校园网网关地址</label>
+        <input id="s-gateway" type="text">
+        <div class="hint">内网连通性与认证检测的目标，一般无需修改</div>
+      </div>
+      <div class="field">
+        <label for="s-public">外网测试地址</label>
+        <input id="s-public" type="text">
+      </div>
+      <div class="field">
+        <label for="s-domain">DNS 测试域名</label>
+        <input id="s-domain" type="text">
+      </div>
+      <div class="field">
+        <label for="s-status">认证状态接口</label>
+        <input id="s-status" type="text">
+      </div>
+      <div class="field">
+        <label for="s-login">认证登录接口</label>
+        <input id="s-login" type="text">
+      </div>
+      <div class="field">
+        <label for="s-portal">认证页地址</label>
+        <input id="s-portal" type="text">
+      </div>
+      <div class="field">
+        <label for="s-carrier">默认运营商</label>
+        <select id="s-carrier">
+          <option value="cmcc">中国移动</option>
+          <option value="ctcc">中国电信</option>
+          <option value="cucc">中国联通</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="s-keyword">校园 WiFi 名称关键字</label>
+        <input id="s-keyword" type="text">
+        <div class="hint">用于在检测中识别校园网 SSID，例如 DORM</div>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="btn-save">保存设置</button>
+        <button class="btn" id="btn-reset">恢复默认</button>
+      </div>
+      <div class="savehint" id="save-hint">已保存</div>
+    </div>
+
+    <div class="about" id="about">校园网助手 Android 检测版</div>
+  </section>
+
+</main>
+
+<nav>
+  <button class="navbtn active" data-view="home"><span class="ficon" data-icon="gauge"></span>检测<span class="dot"></span></button>
+  <button class="navbtn" data-view="login"><span class="ficon" data-icon="key"></span>登录<span class="dot"></span></button>
+  <button class="navbtn" data-view="guide"><span class="ficon" data-icon="lifebuoy"></span>引导<span class="dot"></span></button>
+  <button class="navbtn" data-view="settings"><span class="ficon" data-icon="gear"></span>设置<span class="dot"></span></button>
+</nav>
+
+<script src="app.js"></script>
+</body>
+</html>

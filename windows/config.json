@@ -1,0 +1,32 @@
+{
+    "gateway": "192.168.254.17",
+    "auth_url": "http://192.168.254.17/drcom/login",
+    "carrier": "cmcc",
+    "wifi_ssid": "JSU-WLAN-DORM",
+    "wifi_keyword": "DORM",
+    "public_test_host": "223.5.5.5",
+    "test_domain": "www.baidu.com",
+    "dns_primary": "223.5.5.5",
+    "dns_secondary": "223.6.6.6",
+    "campus_dns_primary": "210.43.64.10",
+    "campus_dns_secondary": "210.43.64.11",
+    "ping_timeout": 10,
+    "login_timeout": 5,
+    "portal_url": "http://192.168.254.17/",
+    "status_url": "http://192.168.254.17/drcom/chkstatus",
+    "last_account": "",
+    "drcom_params": {
+        "callback": "dr1003",
+        "0MKKey": "123456",
+        "R1": "0",
+        "R2": "",
+        "R3": "0",
+        "R6": "0",
+        "para": "00",
+        "v6ip": "",
+        "terminal_type": "1",
+        "lang": "zh-cn",
+        "jsVersion": "4.2",
+        "v": "7081"
+    }
+}

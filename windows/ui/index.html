@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>校园网助手</title>
+<style>
+/* ================= Fluent Design 基础 ================= */
+:root{
+  color-scheme:light;
+  --bg:#f4f4f4;
+  --card:#ffffff;
+  --stroke:rgba(0,0,0,.07);
+  --stroke-strong:rgba(0,0,0,.14);
+  --text:#1b1b1b;
+  --text2:#5f5f5f;
+  --text3:#8a8a8a;
+  --accent:#0f6cbd;
+  --accent-hover:#115ea3;
+  --accent-press:#0c3b5e;
+  --accent-tint:rgba(15,108,203,.10);
+  --ok:#107C10;
+  --ok-tint:rgba(16,124,16,.10);
+  --err:#c50f1f;
+  --err-tint:rgba(197,15,31,.08);
+  --warn:#F7630C;
+  --warn-text:#8a5300;
+  --warn-tint:rgba(247,99,12,.10);
+  --title-bg:rgba(255,255,255,.72);
+  --btn-bg:#fbfbfb;
+  --btn-bg-hover:#f0f0f0;
+  --btn-bg-active:#e6e6e6;
+  --subtle-hover:rgba(0,0,0,.05);
+  --chip-bg:#eaeaea;
+  --skip-bg:#ededed;
+  --skip-bar:#c8c8c8;
+  --input-border:rgba(0,0,0,.4);
+  --scroll-thumb:rgba(0,0,0,.22);
+  --winbtn-hover:rgba(0,0,0,.06);
+  --radius:8px;
+  --shadow:0 1.6px 3.6px rgba(0,0,0,.12),0 .3px .9px rgba(0,0,0,.09);
+  --shadow-big:0 8px 28px rgba(0,0,0,.22);
+}
+/* 深色主题：跟随系统亮/暗模式自动切换（同 Edge 浏览器行为） */
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme:dark;
+    --bg:#202020;
+    --card:#2b2b2b;
+    --stroke:rgba(255,255,255,.09);
+    --stroke-strong:rgba(255,255,255,.17);
+    --text:#f5f5f5;
+    --text2:#c8c8c8;
+    --text3:#9a9a9a;
+    --accent:#4cb0ff;
+    --accent-hover:#69c1ff;
+    --accent-press:#1a86e0;
+    --accent-tint:rgba(76,176,255,.14);
+    --ok:#6ccb5f;
+    --ok-tint:rgba(108,203,95,.13);
+    --err:#ff796b;
+    --err-tint:rgba(255,121,107,.10);
+    --warn:#f89b62;
+    --warn-text:#ffb085;
+    --warn-tint:rgba(248,155,98,.14);
+    --title-bg:rgba(32,32,32,.72);
+    --btn-bg:#3d3d3d;
+    --btn-bg-hover:#474747;
+    --btn-bg-active:#525252;
+    --subtle-hover:rgba(255,255,255,.06);
+    --chip-bg:#3a3a3a;
+    --skip-bg:#3a3a3a;
+    --skip-bar:#666666;
+    --input-border:rgba(255,255,255,.4);
+    --scroll-thumb:rgba(255,255,255,.25);
+    --winbtn-hover:rgba(255,255,255,.08);
+    --shadow:0 1.6px 3.6px rgba(0,0,0,.5),0 .3px .9px rgba(0,0,0,.4);
+    --shadow-big:0 8px 28px rgba(0,0,0,.6);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI Variable Text","Segoe UI","Microsoft YaHei UI","Microsoft YaHei",sans-serif;
+  font-size:14px;color:var(--text);background:var(--bg);
+  overflow:hidden;
+}
+.ficon{font-family:"Segoe MDL2 Assets","Segoe Fluent Icons";font-style:normal;line-height:1}
+
+/* ================= 标题栏（无边框窗口，自绘） ================= */
+header{
+  height:48px;display:flex;align-items:center;gap:16px;padding:0 0 0 16px;
+  background:var(--title-bg);backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--stroke);position:relative;z-index:10;
+  user-select:none;
+}
+.brand{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;white-space:nowrap}
+.brand .logo{width:24px;height:24px;border-radius:6px;object-fit:contain;flex:none}
+.pivot{display:flex;gap:4px;height:100%}
+.pivot-item{
+  border:none;background:none;font:inherit;color:var(--text2);cursor:pointer;
+  padding:0 14px;position:relative;
+}
+.pivot-item:hover{color:var(--text)}
+.pivot-item.active{color:var(--text);font-weight:600}
+.pivot-item.active::after{
+  content:"";position:absolute;left:12px;right:12px;bottom:0;height:3px;
+  border-radius:3px 3px 0 0;background:var(--accent);
+}
+.head-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;
+  border-radius:12px;font-size:12px;background:var(--chip-bg);color:var(--text2);
+}
+.chip.warn{background:var(--warn-tint);color:var(--warn-text)}
+.chip.demo{background:var(--accent-tint);color:var(--accent)}
+/* 窗口控制按钮（最小化/最大化/关闭） */
+.win-controls{display:flex;align-self:stretch;flex:none}
+.win-btn{
+  width:46px;border:none;background:transparent;color:var(--text2);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;
+}
+.win-btn .ficon{font-size:10px}
+.win-btn:hover{background:var(--winbtn-hover);color:var(--text)}
+.win-btn.close:hover{background:#e81123;color:#fff}
+
+/* ================= 布局 ================= */
+main{height:calc(100% - 48px);overflow-y:auto;padding:20px 24px 40px}
+/* 内容区：默认铺满窗口；超宽屏(>1800px)封顶 1760px 居中，避免卡片过度拉伸 */
+.view{display:none;max-width:1760px;margin:0 auto}
+.view.active{display:block}
+.hidden{display:none!important}
+
+/* ================= 卡片与按钮 ================= */
+.card{
+  background:var(--card);border:1px solid var(--stroke);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:16px 18px;
+}
+.btn{
+  height:32px;padding:0 16px;border-radius:4px;border:1px solid var(--stroke-strong);
+  background:var(--btn-bg);font:inherit;color:var(--text);cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;white-space:nowrap;
+  transition:background .12s;
+}
+.btn:hover{background:var(--btn-bg-hover)}
+.btn:active{background:var(--btn-bg-active)}
+.btn.accent{background:var(--accent);border-color:transparent;color:#fff}
+.btn.accent:hover{background:var(--accent-hover)}
+.btn.accent:active{background:var(--accent-press)}
+.btn.subtle{border-color:transparent;background:transparent}
+.btn.subtle:hover{background:var(--subtle-hover)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.big{height:36px;padding:0 22px;font-weight:600}
+
+/* ================= Hero 状态区 ================= */
+.hero{display:flex;align-items:center;gap:18px;padding:22px;flex-wrap:wrap}
+.hero-icon{
+  width:64px;height:64px;border-radius:50%;flex:none;
+  display:flex;align-items:center;justify-content:center;font-size:30px;
+}
+.hero-icon.ok{background:var(--ok-tint);color:var(--ok)}
+.hero-icon.bad{background:var(--warn-tint);color:var(--warn)}
+.hero-icon.err{background:var(--err-tint);color:var(--err)}
+.hero-icon.run{background:var(--accent-tint);color:var(--accent)}
+.hero-text{flex:1;min-width:200px}
+.hero-text h1{font-size:22px;font-weight:600;margin-bottom:4px}
+.hero-text p{color:var(--text2);font-size:13px}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* 旋转加载（Spinner） */
+.spinner{
+  width:26px;height:26px;border-radius:50%;flex:none;margin:19px 0;
+  border:3px solid var(--accent-tint);border-top-color:var(--accent);
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 进度条（Fluent 不定进度） */
+.progress{margin:14px 0}
+.pbar{position:relative;height:3px;border-radius:2px;background:var(--accent-tint);overflow:hidden}
+.pbar::before{
+  content:"";position:absolute;top:0;bottom:0;width:40%;background:var(--accent);
+  border-radius:2px;animation:indet 1.8s cubic-bezier(.4,0,.6,1) infinite;
+}
+@keyframes indet{0%{left:-40%}100%{left:100%}}
+.progress .ptext{margin-top:8px;color:var(--text2);font-size:12px}
+
+/* 非管理员提示条 */
+.banner{
+  display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;
+  padding:10px 14px;border-radius:var(--radius);
+  background:var(--warn-tint);color:var(--warn-text);font-size:13px;
+}
+.banner.danger{
+  background:var(--err-tint);color:var(--err);
+  border:1px solid var(--err);font-weight:600;
+}
+/* 提示条内的教程链接入口（清晰的按钮样式） */
+.banner .blink{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;
+  background:var(--card);border:1px solid var(--stroke-strong);color:var(--text);
+  text-decoration:none;
+}
+.banner .blink:hover{border-color:var(--accent);color:var(--accent)}
+.banner .blink .ficon{font-size:12px}
+.banner .close{
+  margin-left:auto;flex:none;width:22px;height:22px;padding:0;line-height:1;
+  border:none;background:transparent;color:inherit;cursor:pointer;border-radius:4px;font-size:12px;
+}
+.banner .close:hover{background:var(--subtle-hover)}
+
+/* ================= 检测结果网格 ================= */
+/* 检测结果网格：用 flex 流式布局，最后一行卡片自动拉伸铺满，避免右侧留白 */
+.grid{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px}
+.grid>*{flex:1 1 250px;min-width:240px}
+.check-card{padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.check-head{display:flex;align-items:center;gap:10px}
+.check-head .ficon{font-size:18px}
+.check-head .title{font-weight:600;flex:1}
+.status-pill{
+  display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;
+  border-radius:11px;font-size:12px;
+}
+.status-pill .ficon{font-size:12px}
+.status-pill.ok{background:var(--ok-tint);color:var(--ok)}
+.status-pill.fail{background:var(--err-tint);color:var(--err)}
+.status-pill.warn{background:var(--warn-tint);color:var(--warn-text)}
+.status-pill.skip{background:#ededed;color:var(--text3)}
+.check-card{position:relative;overflow:hidden}
+.check-card.ok::before{background:var(--ok)}
+.check-card.fail::before{background:var(--err)}
+.check-card.warn::before{background:var(--warn)}
+.check-card.skip::before{background:var(--skip-bar)}
+.check-detail{color:var(--text2);font-size:13px;min-height:18px}
+.block{border-radius:6px;padding:8px 10px;font-size:13px;line-height:1.55}
+.block .bt{font-weight:600;display:flex;align-items:center;gap:6px;margin-bottom:2px}
+.block.problem{background:var(--err-tint);color:var(--err)}
+.block.fix{background:var(--accent-tint);color:var(--accent)}
+
+/* ================= 操作记录 / 日志 ================= */
+.section-card{margin-top:14px;padding:0;overflow:hidden}
+.section-card>summary{
+  list-style:none;cursor:pointer;padding:12px 18px;font-weight:600;
+  display:flex;align-items:center;gap:8px;user-select:none;
+}
+.section-card>summary::-webkit-details-marker{display:none}
+.section-card>summary .chev{margin-left:auto;transition:transform .15s;color:var(--text3)}
+.section-card[open]>summary .chev{transform:rotate(180deg)}
+#actionsList{list-style:none;padding:0 18px 14px}
+#actionsList li{
+  display:flex;gap:10px;align-items:flex-start;padding:8px 0;
+  border-top:1px solid var(--stroke);font-size:13px;
+}
+#actionsList .step{font-weight:600}
+#actionsList .ad{color:var(--text2)}
+.aicon{flex:none;font-size:14px;margin-top:1px}
+.aicon.success{color:var(--ok)}
+.aicon.fail{color:var(--err)}
+.aicon.skip{color:var(--text3)}
+#logBox{
+  font-family:Consolas,"Courier New",monospace;font-size:12px;line-height:1.7;
+  color:var(--text2);padding:0 18px 14px;white-space:pre-wrap;word-break:break-all;
+  max-height:240px;overflow-y:auto;
+}
+
+/* ================= 高级工具 ================= */
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.tool-card{display:flex;gap:14px;align-items:flex-start}
+.tool-icon{
+  width:40px;height:40px;border-radius:8px;background:var(--accent-tint);
+  color:var(--accent);display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex:none;
+}
+.tool-card h3{font-size:14px;margin-bottom:4px}
+.tool-card p{color:var(--text2);font-size:12.5px;line-height:1.5;margin-bottom:10px}
+h2.group{font-size:16px;font-weight:600;margin:22px 0 10px}
+h2.group:first-child{margin-top:0}
+
+/* ================= 设置页 ================= */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px 16px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
+.field input,.field select{
+  width:100%;height:32px;padding:0 10px;border-radius:4px;font:inherit;
+  border:1px solid var(--input-border);background:var(--card);color:var(--text);
+  outline:none;
+}
+.field input:focus,.field select:focus{border-color:var(--accent);border-bottom-width:2px}
+.field .cap{font-size:11.5px;color:var(--text3);margin-top:4px}
+.form-foot{display:flex;gap:10px;margin-top:18px;align-items:center}
+.save-msg{font-size:13px;color:var(--ok)}
+.save-msg.err{color:var(--err)}
+
+/* ================= 弹窗（Fluent Dialog） ================= */
+.modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;
+  display:flex;align-items:center;justify-content:center;
+}
+.modal-card{
+  width:440px;max-width:92vw;background:var(--card);border-radius:var(--radius);
+  box-shadow:var(--shadow-big);padding:22px 24px;
+}
+.modal-card h2{font-size:18px;font-weight:600;margin-bottom:6px}
+.modal-card .sub{color:var(--text2);font-size:13px;margin-bottom:16px}
+.modal-card .field{margin-bottom:12px}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.or-divider{
+  display:flex;align-items:center;gap:12px;margin:16px 0 12px;
+  color:var(--text3);font-size:12px;
+}
+.or-divider::before,.or-divider::after{content:"";flex:1;height:1px;background:var(--stroke-strong)}
+.cap{font-size:11.5px;color:var(--text3)}
+
+/* WiFi 候选列表 */
+.wifi-list{
+  max-height:230px;overflow-y:auto;border:1px solid var(--stroke);border-radius:6px;
+}
+.wifi-item{
+  display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;
+  border-bottom:1px solid var(--stroke);font-size:13px;
+}
+.wifi-item:last-child{border-bottom:none}
+.wifi-item:hover{background:var(--accent-tint)}
+.wifi-item input{accent-color:var(--accent);flex:none}
+.wifi-item .wssid{flex:1;font-weight:600;word-break:break-all}
+.wifi-item .wsig{color:var(--text3);font-size:12px;flex:none}
+.wifi-item .wtag{
+  flex:none;font-size:11px;padding:1px 7px;border-radius:9px;
+  background:var(--skip-bg);color:var(--text2);
+}
+.wifi-item .wtag.open{background:var(--ok-tint);color:var(--ok)}
+.wifi-item .wtag.cur{background:var(--accent-tint);color:var(--accent)}
+
+/* 滚动条 */
+::-webkit-scrollbar{width:10px}
+::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border-radius:5px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+</style>
+</head>
+<body>
+
+<!-- 事件接收函数需最早定义，供 Python 端 evaluate_js 调用 -->
+<script>
+window.__onEvent = function (payload) {
+  try { handleEvent(payload); } catch (e) { console.error("handleEvent error:", e, payload); }
+};
+</script>
+
+<header>
+  <div class="brand">
+    <img class="logo" src="logo.png" alt="logo">
+    <span>校园网助手</span>
+    <span id="demoChip" class="chip demo hidden">演示模式（未连接后端）</span>
+  </div>
+  <nav class="pivot">
+    <button class="pivot-item active" data-view="home">首页</button>
+    <button class="pivot-item" data-view="tools">高级工具</button>
+    <button class="pivot-item" data-view="settings">设置</button>
+  </nav>
+  <div class="head-right">
+    <span id="adminChip" class="chip warn hidden"><span class="ficon">&#xE7BA;</span>未以管理员身份运行</span>
+  </div>
+  <div class="win-controls nodrag">
+    <button id="winMin" class="win-btn" title="最小化"><span class="ficon">&#xE921;</span></button>
+    <button id="winMax" class="win-btn" title="最大化"><span class="ficon" id="winMaxIcon">&#xE922;</span></button>
+    <button id="winClose" class="win-btn close" title="关闭"><span class="ficon">&#xE8BB;</span></button>
+  </div>
+</header>
+
+<main>
+  <!-- ================= 首页 ================= -->
+  <section id="view-home" class="view active">
+    <div id="scopeBanner" class="banner">
+      <span class="ficon">&#xE946;</span>
+      <div style="flex:1">
+        <div>本工具仅适用于<b>宿舍区校园网</b>（WiFi 名称含“<span id="scopeKeyword">DORM</span>”字段，具体名称以宿舍楼内实际为准）的检测与修复；教学楼、图书馆等<b>公共区域</b>的校园网（JSU-WLAN）不在本工具范围内，请按信息中心教程连接。</div>
+        <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+          <span style="font-size:12px">公共区域校园网教程：</span>
+          <a class="blink" href="#" data-url="https://nic.jsu.edu.cn/fwzn/wljr/cysz/ee4c8a1479144ac2af2b814e37c316ce.htm"><span class="ficon">&#xE8A7;</span>公共区域入网图文教程</a>
+          <a class="blink" href="#" data-url="https://nic.jsu.edu.cn/xwgg/tzgg/227b7dfe9e4741f99e6918b8c37c7a98.htm"><span class="ficon">&#xE8A7;</span>新生校园网络使用指南</a>
+        </div>
+      </div>
+      <button class="close ficon" id="btnScopeClose" title="不再显示">&#xE711;</button>
+    </div>
+
+    <div id="adminBanner" class="banner hidden">
+      <span class="ficon">&#xE7BA;</span>
+      <span>当前程序未以<b>管理员身份</b>运行，修复时将无法修改 IP / DNS 等网络设置。请关闭程序后，右键选择“以管理员身份运行”。</span>
+    </div>
+
+    <div id="nonCampusBanner" class="banner danger hidden">
+      <span class="ficon">&#xE711;</span>
+      <span>⚠ 当前并非<b>校园网环境</b>，<b>请勿点击“一键修复”</b>，以免修改网络配置导致当前网络无法上网。下方 DNS / 代理等检测结果仅供参考，请手动处理。</span>
+    </div>
+
+    <div class="hero card">
+      <div id="heroIcon" class="hero-icon run"><span class="spinner"></span></div>
+      <div class="hero-text">
+        <h1 id="heroTitle">正在初始化…</h1>
+        <p id="heroSub">正在连接程序后端，请稍候</p>
+      </div>
+      <div class="hero-actions">
+        <button id="btnDiagnose" class="btn big" disabled>
+          <span class="ficon">&#xE72C;</span>一键检测
+        </button>
+        <button id="btnRepair" class="btn big accent" disabled>
+          <span class="ficon">&#xE90F;</span>一键修复
+        </button>
+        <button id="btnRevert" class="btn big" disabled title="把系统恢复到本工具修改前的状态">
+          <span class="ficon">&#xE7A7;</span>撤销所有更改
+        </button>
+      </div>
+    </div>
+
+    <div id="progressWrap" class="progress hidden">
+      <div class="pbar"></div>
+      <div class="ptext" id="progressText">正在执行…</div>
+    </div>
+
+    <div id="checksGrid" class="grid"></div>
+
+    <details id="actionsCard" class="card section-card hidden">
+      <summary><span class="ficon">&#xE9D2;</span>已执行的修复操作<span class="ficon chev">&#xE70D;</span></summary>
+      <ul id="actionsList"></ul>
+    </details>
+
+    <details id="logCard" class="card section-card">
+      <summary><span class="ficon">&#xE7C3;</span>运行日志
+        <span class="btn subtle" id="btnCopyReport" style="height:24px;margin-left:8px">复制报告</span>
+        <span class="ficon chev">&#xE70D;</span></summary>
+      <div id="logBox"></div>
+    </details>
+  </section>
+
+  <!-- ================= 高级工具 ================= -->
+  <section id="view-tools" class="view">
+    <h2 class="group">手动修复工具</h2>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:12px">
+      以下工具供熟悉网络设置的用户手动操作，普通用户直接使用首页的“一键修复”即可。修改后可回到首页重新检测。</p>
+    <div class="tool-grid" id="toolGrid"></div>
+
+    <h2 class="group">诊断详情（原始数据）</h2>
+    <div class="card"><pre id="rawReport" style="font-size:12px;color:var(--text2);white-space:pre-wrap;word-break:break-all">暂无数据，请先在首页执行检测。</pre></div>
+  </section>
+
+  <!-- ================= 设置 ================= -->
+  <section id="view-settings" class="view">
+    <div id="settingsForm"></div>
+    <div class="form-foot">
+      <button id="btnSaveCfg" class="btn accent big"><span class="ficon">&#xE74E;</span>保存设置</button>
+      <button id="btnResetCfg" class="btn"><span class="ficon">&#xE777;</span>恢复默认</button>
+      <span id="saveMsg" class="save-msg"></span>
+    </div>
+  </section>
+</main>
+
+<!-- 登录弹窗 -->
+<div id="loginModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>校园网认证登录</h2>
+    <p class="sub">检测到校园网认证已失效，请选择一种方式完成认证。</p>
+    <div class="field"><label>学号</label><input id="inSid" type="text" autocomplete="off"></div>
+    <div class="field"><label>密码</label><input id="inPwd" type="password"></div>
+    <div class="field"><label>运营商线路</label><select id="inCarrier"></select></div>
+    <div class="modal-foot">
+      <button class="btn" id="btnCredCancel">跳过</button>
+      <button class="btn accent" id="btnCredOk">登录</button>
+    </div>
+    <div class="or-divider"><span>或者</span></div>
+    <button class="btn big" id="btnPortal" style="width:100%">
+      <span class="ficon">&#xE774;</span>打开认证页面登录（推荐）
+    </button>
+    <p class="cap" style="text-align:center;margin-top:8px">
+      弹出校园网登录页面，登录成功后本程序会自动继续，并自动记住账号与运营商线路。</p>
+    <p id="portalWait" class="sub hidden" style="color:var(--accent);text-align:center;margin-top:6px">
+      已打开认证页面，请在弹出的窗口中完成登录，成功后本窗口自动关闭…</p>
+  </div>
+</div>
+
+<!-- WiFi 选择弹窗 -->
+<div id="wifiModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>选择校园 WiFi</h2>
+    <p class="sub" id="wifiSub">未检测到已连接的校园无线网络，请选择要连接的 WiFi：</p>
+    <div id="wifiList" class="wifi-list"></div>
+    <div class="or-divider"><span>或者</span></div>
+    <div class="field">
+      <label>手动输入 WiFi 名称</label>
+      <input id="inWifiManual" type="text" placeholder="例如：JSU-WLAN-DORM-5G" spellcheck="false">
+      <div class="cap">列表为空或不完整时可直接输入；选中的名称会被记住，下次自动连接。</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="btnWifiSkip">跳过</button>
+      <button class="btn accent" id="btnWifiOk">连接</button>
+    </div>
+  </div>
+</div>
+
+<!-- 网卡选择弹窗 -->
+<div id="adapterModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>选择要保留的网卡</h2>
+    <p class="sub">检测到多张网卡同时连接校园网。若认证系统限制终端数量，会互相挤下线（反复掉线）；请选择保留一张，其余网卡将被暂时禁用（之后可在“控制面板 → 网络连接”中重新开启）。</p>
+    <div id="adapterList" class="wifi-list"></div>
+    <div class="modal-foot">
+      <button class="btn" id="btnAdapterSkip">跳过</button>
+      <button class="btn accent" id="btnAdapterOk">保留</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ======================= 全局状态 ======================= */
+const $ = s => document.querySelector(s);
+const STATE = {
+  api: null,            // 后端接口（pywebview 或演示模拟）
+  config: {}, defaults: {}, carriers: {}, is_admin: true,
+  busy: false, demo: false, lastReport: null,
+};
+
+/* ======================= 后端对接 ======================= */
+function waitBackend(timeout) {
+  return new Promise(resolve => {
+    const t0 = Date.now();
+    (function check() {
+      if (window.pywebview && window.pywebview.api) return resolve("pywebview");
+      if (Date.now() - t0 > timeout) return resolve("demo");
+      setTimeout(check, 120);
+    })();
+  });
+}
+
+function makeDemoApi() { // 无 pywebview 时（如直接用浏览器打开）提供演示数据
+  const emit = (type, data) => setTimeout(() => window.__onEvent(Object.assign({ type }, data)), 0);
+  const demoConfig = { gateway: "192.168.254.17", auth_url: "http://192.168.254.17/drcom/login",
+    portal_url: "http://192.168.254.17/", status_url: "http://192.168.254.17/drcom/chkstatus",
+    carrier: "cmcc", wifi_ssid: "JSU-WLAN-DORM", wifi_keyword: "DORM", public_test_host: "223.5.5.5",
+    test_domain: "www.baidu.com", dns_primary: "223.5.5.5", dns_secondary: "223.6.6.6",
+    campus_dns_primary: "210.43.64.10", campus_dns_secondary: "210.43.64.11",
+    ping_timeout: 10, login_timeout: 5, last_account: "" };
+  const report = {
+    ok: false, summary: "发现 2 个问题",
+    checks: [
+      { key: "adapter",  title: "网络连接", status: "ok",   detail: "检测到可用连接：以太网", problem: "", fix: "" },
+      { key: "external", title: "外网连通", status: "warn", detail: "暂时无法访问 223.5.5.5",
+        problem: "无法访问公共互联网", fix: "校园网环境可能是未认证，请继续查看下方认证检测结果；非校园网环境请检查网络连接" },
+      { key: "signal",   title: "WiFi 信号强度", status: "skip", detail: "当前使用有线网络，跳过", problem: "", fix: "" },
+      { key: "intranet", title: "校园网内网", status: "ok", detail: "已连通网关 192.168.254.17", problem: "", fix: "" },
+      { key: "auth",     title: "校园网认证", status: "fail",
+        problem: "可访问内网，但无法访问外网（认证已失效或未认证）",
+        fix: "使用“一键修复”并输入学号密码重新认证（注意选择运营商线路）" },
+      { key: "dns",      title: "域名解析", status: "skip", detail: "因上层检测未通过，已跳过", problem: "", fix: "" },
+      { key: "proxy",    title: "系统代理", status: "warn",
+        problem: "检测到系统代理已开启（127.0.0.1:7890），多为此前代理/加速软件残留，会导致登录校园网后浏览器仍然无法打开网页",
+        fix: "使用“一键修复”自动关闭；也可到 Windows 设置 → 网络和 Internet → 代理 中手动关闭" },
+    ],
+    actions: [
+      { step: "清除 DNS 缓存", result: "success", detail: "" },
+      { step: "登录校园网认证", result: "fail", detail: "演示数据：登录被拒绝" },
+    ],
+  };
+  // 演示：非校园网环境（家庭宽带 / 手机热点）
+  const nonCampusReport = {
+    ok: false, summary: "当前并非校园网环境", non_campus: true, external_ok: true,
+    checks: [
+      { key: "adapter",  title: "网络连接", status: "ok",   detail: "检测到可用连接：WLAN", problem: "", fix: "" },
+      { key: "external", title: "外网连通", status: "ok",   detail: "网络正常（223.5.5.5 可达）", problem: "", fix: "" },
+      { key: "signal",   title: "WiFi 信号强度", status: "ok", detail: "信号良好（-45 dBm），连接的是附近 AP", problem: "", fix: "" },
+      { key: "intranet", title: "校园网内网", status: "warn",
+        problem: "无法连通校园网网关 192.168.254.17，当前很可能并非校园网环境",
+        fix: "本工具专为校园网设计，非校园网环境下请勿点击“一键修复”，以免修改网络配置导致当前网络无法上网。" },
+      { key: "auth",     title: "校园网认证", status: "skip", detail: "非校园网环境，无法检测校园网认证状态", problem: "", fix: "" },
+      { key: "dns",      title: "域名解析", status: "ok", detail: "www.baidu.com 解析正常", problem: "", fix: "" },
+      { key: "proxy",    title: "系统代理", status: "ok", detail: "未开启系统代理，不会影响网页访问", problem: "", fix: "" },
+    ],
+    actions: [],
+  };
+  const logs = ["开始网络诊断...", "正在检测外网连通性（223.5.5.5）...",
+    "正在检测内网连通性（网关 192.168.254.17）...",
+    "正在检测系统代理设置...",
+    "诊断完成：网络正常，但当前不在校园网环境，已禁用一键修复。"];
+  const finishOk = account => { // 演示：模拟修复成功收尾
+    emit("log", { text: "域名解析正常，网络完全正常。" });
+    const okReport = JSON.parse(JSON.stringify(report));
+    okReport.checks = okReport.checks.map(c => ({ ...c, status: "ok", problem: "", fix: "" }));
+    okReport.ok = true; okReport.summary = "网络一切正常";
+    okReport.actions.push({ step: account ? "使用账号 " + account + " 登录校园网认证" : "通过认证页面完成登录",
+      result: "success", detail: "" });
+    setTimeout(() => { emit("done", { report: okReport }); emit("busy", { running: false }); }, 400);
+  };
+  return {
+    async get_initial_state() {
+      return { config: demoConfig, defaults: Object.assign({}, demoConfig),
+        carriers: { cmcc: "中国移动", ctcc: "中国电信", cucc: "中国联通" }, is_admin: false };
+    },
+    start_diagnose() {
+      emit("busy", { running: true });
+      const diagLogs = ["开始网络诊断（仅检测，不会修改系统设置）...",
+        "正在检测网络连接...", "正在检测内网连通性（网关 192.168.254.17）...",
+        "网关不可达，判定当前并非校园网环境。", "正在检测域名解析（www.baidu.com）...",
+        "正在检测系统代理设置...",
+        "诊断完成：当前并非校园网环境，已禁用一键修复，仅展示 DNS / 代理等通用检测结果。"];
+      diagLogs.forEach((t, i) => setTimeout(() => emit("log", { text: t }), 350 * (i + 1)));
+      setTimeout(() => { emit("done", { report: nonCampusReport }); emit("busy", { running: false }); }, 350 * (diagLogs.length + 1));
+    },
+    // 演示“一键修复”：先自动处理，然后弹出 WiFi 选择窗口
+    start_repair() {
+      emit("busy", { running: true });
+      const rlogs = ["开始一键修复...", "检测到系统代理已开启（127.0.0.1:7890），正在自动关闭...",
+        "系统代理已关闭。", "未检测到可用的校园网连接，将尝试连接校园无线网络...",
+        "正在扫描周围的无线网络...", "已按关键字 “DORM” 筛选出 3 个候选网络。"];
+      rlogs.forEach((t, i) => setTimeout(() => emit("log", { text: t }), 350 * (i + 1)));
+      setTimeout(() => emit("wifi_request", {
+        candidates: [
+          { ssid: "JSU-WLAN-DORM", signal: 82, auth: "开放式" },
+          { ssid: "JSU-WLAN-DORM-5G", signal: 64, auth: "开放式" },
+          { ssid: "DORM-Area2", signal: 40, auth: "开放式" },
+        ], current: "", keyword: "DORM"
+      }), 350 * (rlogs.length + 1));
+    },
+    submit_wifi_choice(ssid) {
+      if (ssid) {
+        emit("log", { text: "已成功连接无线网络 " + ssid + "。" });
+        setTimeout(() => emit("log", { text: "无法访问外网，需要登录校园网认证。" }), 500);
+        setTimeout(() => emit("creds_request", { last_account: "", carrier: "cmcc" }), 1000);
+      } else {
+        emit("log", { text: "已跳过 WiFi 选择。" });
+        setTimeout(() => { emit("done", { report }); emit("busy", { running: false }); }, 400);
+      }
+    },
+    submit_adapter_choice(name) {
+      if (name) emit("log", { text: "已保留网卡 " + name + "，其余网卡已暂时禁用。" });
+      else emit("log", { text: "已跳过多网卡处理。" });
+    },
+    start_portal_login() {
+      emit("log", { text: "演示模式：正在打开认证页面 http://192.168.254.17/ ..." });
+      emit("portal_opened", { url: "http://192.168.254.17/" });
+      setTimeout(() => emit("log", { text: "检测到认证已生效。" }), 2500);
+      setTimeout(() => emit("log", { text: "读取到认证账号：2024001@cmcc" }), 3000);
+      setTimeout(() => emit("portal_login_success", { account: "2024001@cmcc", carrier: "cmcc" }), 3200);
+      setTimeout(() => finishOk("2024001@cmcc"), 4200);
+    },
+    submit_credentials(sid, pwd) {
+      if (sid && pwd) {
+        emit("log", { text: "正在使用 中国移动 线路登录校园网..." });
+        setTimeout(() => emit("log", { text: "登录成功。" }), 800);
+        setTimeout(() => finishOk(sid), 1600);
+      } else {
+        setTimeout(() => { emit("done", { report }); emit("busy", { running: false }); }, 400);
+      }
+    },
+    async save_config() { return { ok: true, config: STATE.config }; },
+    async reset_config() { return { ok: true, config: STATE.config }; },
+    run_tool() { emit("log", { text: "演示模式：工具未实际执行。" }); emit("done", { report: null }); },
+    revert_all() {
+      emit("log", { text: "演示模式：撤销操作未实际执行。" });
+      emit("done", { report: { ok: true, kind: "revert", summary: "撤销完成", checks: [], actions: [
+        { step: "撤销 - 恢复系统代理原设置", result: "success" },
+        { step: "撤销 - 重新启用网卡 以太网", result: "success" },
+        { step: "撤销 - 恢复 WLAN 的静态 DNS（210.43.64.10、210.43.64.11）", result: "success" }
+      ] } });
+      emit("busy", { running: false });
+    },
+  };
+}
+
+/* ======================= 事件处理（Python 推送） ======================= */
+function handleEvent(p) {
+  switch (p.type) {
+    case "log":     appendLog(p.text); break;
+    case "busy":    setBusy(!!p.running, p.task || ""); break;
+    case "wifi_request": openWifiModal(p.candidates || [], p.current || "", p.keyword || ""); break;
+    case "adapter_request": openAdapterModal(p.candidates || []); break;
+    case "creds_request": openLoginModal(p.last_account, p.carrier); break;
+    case "portal_opened": $("#portalWait").classList.remove("hidden"); break;
+    case "portal_login_success": closeLoginModal(); break;
+    case "portal_closed": $("#portalWait").classList.add("hidden"); break;
+    case "window_state": setMaxIcon(!!p.maximized); break;
+    case "done":
+      setBusy(false);
+      if (p.report) { STATE.lastReport = p.report; renderReport(p.report); }
+      break;
+  }
+}
+
+/* ======================= 视图切换 ======================= */
+document.querySelectorAll(".pivot-item").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".pivot-item").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    $("#view-" + btn.dataset.view).classList.add("active");
+  });
+});
+
+/* ======================= 首页渲染 ======================= */
+const HERO = {
+  init: { cls: "run", title: "正在初始化…" },
+  busy: { cls: "run", title: "正在检测…" },
+  ok:   { cls: "ok",  icon: "&#xE73E;", title: "网络一切正常", sub: "所有检测项均已通过，如遇问题可重新检测" },
+  bad:  { cls: "bad", icon: "&#xE7BA;", title: "发现问题", sub: "请点击“一键修复”，程序将自动处理以下问题" },
+  dead: { cls: "err", icon: "&#xE711;", title: "网络连接故障", sub: "可尝试“一键修复”让电脑自动重新获取 IP；若无效请按卡片提示检查网线 / WiFi，或联系网络管理员" },
+  noncampus: { cls: "err", icon: "&#xE711;", title: "非校园网环境", sub: "已禁用一键修复，仅展示 DNS / 代理等通用检测结果" },
+};
+function setHero(mode, title, sub) {
+  const h = HERO[mode];
+  const iconEl = $("#heroIcon");
+  iconEl.className = "hero-icon " + h.cls;
+  iconEl.innerHTML = mode === "busy" || mode === "init"
+    ? '<span class="spinner"></span>' : '<span class="ficon">' + h.icon + "</span>";
+  $("#heroTitle").textContent = title || h.title;
+  $("#heroSub").textContent = sub || h.sub;
+}
+
+function setBusy(running, task) {
+  STATE.busy = running;
+  if (running) {
+    // 开始新任务时重置非校园网标记，等待本次检测结果重新判定
+    STATE.non_campus = false;
+    $("#nonCampusBanner").classList.add("hidden");
+    $("#btnRepair").title = "";
+  }
+  // 修复按钮额外受 non_campus 状态约束（非校园网环境下始终禁用）
+  $("#btnDiagnose").disabled = running || !STATE.api;
+  $("#btnRepair").disabled = running || STATE.non_campus || !STATE.api;
+  $("#btnRevert").disabled = running || !STATE.api;
+  $("#progressWrap").classList.toggle("hidden", !running);
+  if (running) {
+    var action = task === "repair" ? "自动修复" : task === "revert" ? "撤销操作"
+      : task === "tool" ? "执行操作" : "自动检测";
+    setHero("busy", "正在执行，请稍候…", "程序正在" + action + "，可展开下方“运行日志”查看进度");
+  }
+}
+
+function renderReport(rep) {
+  // 撤销报告：无检查项，仅列出每一步撤销动作
+  if (rep.kind === "revert") {
+    setHero(rep.ok ? "ok" : "bad", rep.summary,
+            rep.ok ? "系统已恢复到本工具修改前的状态，可重新排查网络问题"
+                   : "部分更改未能撤销，可再次尝试或查看运行日志手动恢复");
+    $("#checksGrid").innerHTML = "";
+    const acts = rep.actions || [];
+    $("#actionsCard").classList.toggle("hidden", acts.length === 0);
+    const AI = { success: ['success', '&#xE73E;'], fail: ['fail', '&#xE711;'], skip: ['skip', '&#xE946;'] };
+    $("#actionsList").innerHTML = acts.map(a => {
+      const i = AI[a.result] || AI.skip;
+      return `<li><span class="ficon aicon ${i[0]}">${i[1]}</span>
+        <span><span class="step">${esc(a.step)}</span>
+        ${a.detail ? `<span class="ad"> — ${esc(a.detail)}</span>` : ""}</span></li>`;
+    }).join("");
+    $("#rawReport").textContent = JSON.stringify(rep, null, 2);
+    return;
+  }
+
+  const fails = rep.checks.filter(c => c.status === "fail");
+  const warns = rep.checks.filter(c => c.status === "warn");
+  const isNonCampus = !!rep.non_campus;
+  const externalOk = !!rep.external_ok;
+  STATE.non_campus = isNonCampus;
+  $("#nonCampusBanner").classList.toggle("hidden", !isNonCampus);
+  if (isNonCampus) {
+    // 非校园网但外网通：网络正常，只是不在校园网环境
+    if (externalOk) {
+      setHero("noncampus", "网络正常，但不在校园网环境", "你的网络连接是正常的，但无法连通校园网网关。一键修复已禁用，连接校园网 WiFi 后重新检测即可恢复。");
+    } else {
+      setHero("noncampus");
+    }
+  } else if (rep.ok) {
+    setHero("ok");
+  } else if (fails.some(c => c.key === "adapter" || c.key === "intranet")) {
+    setHero("dead");
+  } else {
+    setHero("bad", "发现 " + (fails.length + warns.length) + " 个问题");
+  }
+  // 非校园网环境下禁用一键修复（避免修改网络配置导致断网）
+  $("#btnRepair").disabled = isNonCampus || STATE.busy || !STATE.api;
+  if (isNonCampus) $("#btnRepair").title = "当前并非校园网环境，已禁用一键修复";
+
+  $("#checksGrid").innerHTML = rep.checks.map(c => {
+    const pill = { ok: ['ok', '&#xE73E;', '正常'], fail: ['fail', '&#xE711;', '异常'],
+                   warn: ['warn', '&#xE7BA;', '注意'],
+                   skip: ['skip', '&#xE946;', '跳过'] }[c.status] || ['skip', '&#xE946;', '—'];
+    return `<div class="check-card card ${c.status}">
+      <div class="check-head">
+        <span class="title">${c.title}</span>
+        <span class="status-pill ${pill[0]}"><span class="ficon">${pill[1]}</span>${pill[2]}</span>
+      </div>
+      ${c.detail ? `<div class="check-detail">${esc(c.detail)}</div>` : ""}
+      ${c.problem ? `<div class="block problem"><div class="bt"><span class="ficon">&#xE7BA;</span>检测出的问题</div>${esc(c.problem)}</div>` : ""}
+      ${c.fix ? `<div class="block fix"><div class="bt"><span class="ficon">&#xE90F;</span>修复手段</div>${esc(c.fix)}</div>` : ""}
+    </div>`;
+  }).join("");
+
+  const acts = rep.actions || [];
+  $("#actionsCard").classList.toggle("hidden", acts.length === 0);
+  const AI = { success: ['success', '&#xE73E;'], fail: ['fail', '&#xE711;'], skip: ['skip', '&#xE946;'] };
+  $("#actionsList").innerHTML = acts.map(a => {
+    const i = AI[a.result] || AI.skip;
+    return `<li><span class="ficon aicon ${i[0]}">${i[1]}</span>
+      <span><span class="step">${esc(a.step)}</span>
+      ${a.detail ? `<span class="ad"> — ${esc(a.detail)}</span>` : ""}</span></li>`;
+  }).join("");
+
+  $("#rawReport").textContent = JSON.stringify(rep, null, 2);
+  if (!rep.ok && fails.length) $("#actionsCard").open = true;
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+}
+
+function appendLog(text) {
+  const box = $("#logBox");
+  const line = document.createElement("div");
+  const t = new Date().toTimeString().slice(0, 8);
+  line.textContent = `[${t}] ${text}`;
+  box.appendChild(line);
+  // 限制日志行数，避免长时间运行后 DOM 节点过多导致界面卡顿
+  while (box.childElementCount > 500) {
+    box.removeChild(box.firstChild);
+  }
+  box.scrollTop = box.scrollHeight;
+  if (STATE.busy) $("#progressText").textContent = text;
+}
+
+/* ======================= 登录弹窗 ======================= */
+function openLoginModal(lastAccount, carrier) {
+  fillCarrierSelect($("#inCarrier"), carrier || STATE.config.carrier || "cmcc");
+  $("#inSid").value = lastAccount || STATE.config.last_account || "";
+  $("#inPwd").value = "";
+  $("#portalWait").classList.add("hidden");
+  $("#loginModal").classList.remove("hidden");
+  $("#inSid").focus();
+}
+function closeLoginModal() {
+  $("#loginModal").classList.add("hidden");
+  $("#portalWait").classList.add("hidden");
+}
+
+$("#btnCredOk").addEventListener("click", () => {
+  STATE.api.submit_credentials($("#inSid").value.trim(), $("#inPwd").value, $("#inCarrier").value);
+  closeLoginModal();
+});
+$("#btnCredCancel").addEventListener("click", () => {
+  STATE.api.submit_credentials("", "", "");
+  closeLoginModal();
+});
+$("#btnPortal").addEventListener("click", () => {
+  $("#portalWait").classList.remove("hidden");
+  STATE.api.start_portal_login();
+});
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if (!$("#adapterModal").classList.contains("hidden")) {
+    STATE.api.submit_adapter_choice("");
+    closeAdapterModal();
+  } else if (!$("#wifiModal").classList.contains("hidden")) {
+    STATE.api.submit_wifi_choice("");
+    closeWifiModal();
+  } else if (!$("#loginModal").classList.contains("hidden")) {
+    STATE.api.submit_credentials("", "", "");
+    closeLoginModal();
+  }
+});
+
+/* ======================= WiFi 选择弹窗 ======================= */
+function isOpenAuth(auth) {
+  return !auth || /开放|open/i.test(String(auth));
+}
+function openWifiModal(candidates, current, keyword) {
+  $("#wifiSub").textContent = keyword
+    ? `未检测到已连接的校园无线网络，以下是名称含 “${keyword}” 的 WiFi（按信号强度排序）：`
+    : "未检测到已连接的校园无线网络，请选择要连接的 WiFi：";
+  const list = $("#wifiList");
+  list.innerHTML = candidates.map(n => `
+    <label class="wifi-item">
+      <input type="radio" name="wifi" value="${esc(n.ssid)}" ${n.ssid === current ? "checked" : ""}>
+      <span class="wssid">${esc(n.ssid)}</span>
+      <span class="wsig">信号 ${n.signal ? n.signal + "%" : "—"}</span>
+      <span class="wtag ${isOpenAuth(n.auth) ? "open" : ""}">${isOpenAuth(n.auth) ? "开放" : "加密"}</span>
+      ${n.ssid === current ? '<span class="wtag cur">当前</span>' : ""}
+    </label>`).join("");
+  $("#inWifiManual").value = "";
+  $("#wifiModal").classList.remove("hidden");
+}
+function closeWifiModal() {
+  $("#wifiModal").classList.add("hidden");
+}
+$("#btnWifiOk").addEventListener("click", () => {
+  const manual = $("#inWifiManual").value.trim();
+  const picked = (document.querySelector('input[name="wifi"]:checked') || {}).value || "";
+  const ssid = manual || picked;
+  if (!ssid) { $("#inWifiManual").focus(); return; }
+  closeWifiModal();
+  STATE.api.submit_wifi_choice(ssid);
+});
+$("#btnWifiSkip").addEventListener("click", () => {
+  closeWifiModal();
+  STATE.api.submit_wifi_choice("");
+});
+// 点选列表项后支持直接回车确认
+$("#wifiModal").addEventListener("keydown", e => {
+  if (e.key === "Enter" && e.target.id === "inWifiManual") $("#btnWifiOk").click();
+});
+
+/* ======================= 网卡选择弹窗 ======================= */
+function openAdapterModal(candidates) {
+  $("#adapterList").innerHTML = candidates.map((n, i) => `
+    <label class="wifi-item">
+      <input type="radio" name="adapter" value="${esc(n)}" ${i === 0 ? "checked" : ""}>
+      <span class="wssid">${esc(n)}</span>
+    </label>`).join("");
+  $("#adapterModal").classList.remove("hidden");
+}
+function closeAdapterModal() {
+  $("#adapterModal").classList.add("hidden");
+}
+$("#btnAdapterOk").addEventListener("click", () => {
+  const picked = (document.querySelector('input[name="adapter"]:checked') || {}).value || "";
+  if (!picked) return;
+  closeAdapterModal();
+  STATE.api.submit_adapter_choice(picked);
+});
+$("#btnAdapterSkip").addEventListener("click", () => {
+  closeAdapterModal();
+  STATE.api.submit_adapter_choice("");
+});
+$("#adapterModal").addEventListener("keydown", e => {
+  if (e.key === "Enter") $("#btnAdapterOk").click();
+});
+
+function fillCarrierSelect(sel, current) {
+  sel.innerHTML = Object.entries(STATE.carriers)
+    .map(([k, v]) => `<option value="${k}" ${k === current ? "selected" : ""}>${v}</option>`).join("");
+}
+
+/* ======================= 高级工具页 ======================= */
+const TOOLS = [
+  { id: "flush_dns", icon: "&#xE72C;", title: "清除 DNS 缓存", desc: "删除本地缓存的域名解析记录，常用于“能上 QQ 但打不开网页”的情况。" },
+  { id: "reset_dhcp", icon: "&#xE777;", title: "重置为 DHCP（重新获取 IP）", desc: "将第一张网卡的 IP 和 DNS 恢复为自动获取，并重新向网关申请地址。" },
+  { id: "set_public_dns", icon: "&#xE9D9;", title: "设置公共 DNS", desc: "将 DNS 手动指定为 223.5.5.5 / 223.6.6.6（可在设置页修改），用于绕过故障的校内 DNS。" },
+  { id: "connect_wifi", icon: "&#xE701;", title: "连接校园 WiFi", desc: "向系统发送连接指定 WiFi（可在设置页修改）的请求。" },
+  { id: "disable_proxy", icon: "&#xE72E;", title: "关闭系统代理", desc: "关闭 Windows 系统代理与 PAC 脚本（多为此前代理/加速软件残留），解决“登录成功但网页打不开”。" },
+  { id: "reset_winhttp", icon: "&#xE74E;", title: "重置 WinHTTP 代理（需管理员）", desc: "清除系统服务级别的代理设置（netsh winhttp reset proxy），部分代理软件会同时修改此处。" },
+];
+function renderTools() {
+  $("#toolGrid").innerHTML = TOOLS.map(t => `
+    <div class="card tool-card">
+      <div class="tool-icon ficon">${t.icon}</div>
+      <div style="flex:1">
+        <h3>${t.title}</h3><p>${t.desc}</p>
+        <button class="btn" data-tool="${t.id}"><span class="ficon">&#xE768;</span>执行</button>
+      </div>
+    </div>`).join("");
+  $("#toolGrid").querySelectorAll("[data-tool]").forEach(b =>
+    b.addEventListener("click", () => { if (!STATE.busy) STATE.api.run_tool(b.dataset.tool); }));
+}
+
+/* ======================= 设置页 ======================= */
+const FIELD_SCHEMA = [
+  { group: "基础配置（普通用户）", items: [
+    { key: "gateway", label: "网关地址" },
+    { key: "auth_url", label: "认证服务器地址" },
+    { key: "portal_url", label: "认证页面地址" },
+    { key: "carrier", label: "默认运营商线路", type: "select" },
+    { key: "wifi_ssid", label: "首选 WiFi 名称（修复时优先直连，选择后自动记住）" },
+    { key: "wifi_keyword", label: "WiFi 筛选关键字", type: "text",
+      cap: "修复时按此关键字（大小写不敏感）扫描并筛选校园 WiFi 供选择；留空则列出全部开放网络" },
+  ]},
+  { group: "检测与 DNS（专业选项）", items: [
+    { key: "status_url", label: "在线状态查询接口" },
+    { key: "public_test_host", label: "外网测试地址" },
+    { key: "test_domain", label: "解析测试域名" },
+    { key: "dns_primary", label: "公共 DNS（首选）" },
+    { key: "dns_secondary", label: "公共 DNS（备用）" },
+    { key: "campus_dns_primary", label: "校内 DNS（首选）" },
+    { key: "campus_dns_secondary", label: "校内 DNS（备用）" },
+    { key: "ping_timeout", label: "Ping 超时（秒）", type: "number" },
+    { key: "login_timeout", label: "登录请求超时（秒）", type: "number" },
+  ]},
+];
+function renderSettings() {
+  $("#settingsForm").innerHTML = FIELD_SCHEMA.map(g => `
+    <h2 class="group">${g.group}</h2>
+    <div class="card form-grid">
+      ${g.items.map(f => {
+        const val = esc(STATE.config[f.key] ?? "");
+        const def = STATE.defaults[f.key] ?? "—";
+        let input;
+        if (f.type === "select") {
+          input = `<select data-key="${f.key}">${Object.entries(STATE.carriers)
+            .map(([k, v]) => `<option value="${k}" ${k === val ? "selected" : ""}>${v}</option>`).join("")}</select>`;
+        } else {
+          input = `<input data-key="${f.key}" type="${f.type || "text"}" value="${val}" spellcheck="false">`;
+        }
+        return `<div class="field"><label>${f.label}</label>${input}
+          <div class="cap">${esc(f.cap || "默认值：" + def + "（留空或恢复默认即可还原）")}</div></div>`;
+      }).join("")}
+    </div>`).join("");
+}
+function collectSettings() {
+  const out = {};
+  document.querySelectorAll("#settingsForm [data-key]").forEach(el => { out[el.dataset.key] = el.value; });
+  return out;
+}
+$("#btnSaveCfg").addEventListener("click", async () => {
+  const msg = $("#saveMsg");
+  msg.className = "save-msg"; msg.textContent = "正在保存…";
+  const r = await STATE.api.save_config(JSON.stringify(collectSettings()));
+  if (r && r.ok) {
+    STATE.config = r.config || STATE.config;
+    msg.textContent = "已保存。";
+    renderSettings();
+  } else {
+    msg.className = "save-msg err"; msg.textContent = (r && r.message) || "保存失败";
+  }
+  setTimeout(() => { msg.textContent = ""; }, 3000);
+});
+$("#btnResetCfg").addEventListener("click", async () => {
+  const r = await STATE.api.reset_config();
+  if (r && r.ok) { STATE.config = r.config; renderSettings(); appendLog("已恢复默认配置。"); }
+});
+
+/* ======================= 其他 ======================= */
+$("#btnDiagnose").addEventListener("click", () => { if (!STATE.busy) STATE.api.start_diagnose(); });
+$("#btnRepair").addEventListener("click", () => { if (!STATE.busy) STATE.api.start_repair(); });
+$("#btnRevert").addEventListener("click", () => {
+  if (STATE.busy) return;
+  const msg = "撤销所有更改会把系统恢复到本工具修改前的状态，包括：\n\n"
+    + "  · 重新启用被禁用的网卡\n"
+    + "  · 恢复 IP / DNS 原配置\n"
+    + "  · 还原系统代理设置\n"
+    + "  · 恢复 WiFi 随机 MAC 设置\n"
+    + "  · 删除本工具创建的 WiFi 配置文件\n\n"
+    + "如果修复前网络本来就是断的，撤销后也会恢复为断开状态。\n确定继续吗？";
+  if (confirm(msg)) STATE.api.revert_all();
+});
+$("#btnCopyReport").addEventListener("click", e => {
+  e.stopPropagation();
+  if (!STATE.lastReport) return;
+  navigator.clipboard.writeText(JSON.stringify(STATE.lastReport, null, 2))
+    .then(() => { e.target.textContent = "已复制"; setTimeout(() => { e.target.textContent = "复制报告"; }, 1500); })
+    .catch(() => {});
+});
+
+/* ======================= 适用范围提示（仅宿舍区校园网） ======================= */
+const SCOPE_KEY = "scopeBannerHidden";
+if (localStorage.getItem(SCOPE_KEY) === "1") $("#scopeBanner").classList.add("hidden");
+$("#btnScopeClose").addEventListener("click", () => {
+  $("#scopeBanner").classList.add("hidden");
+  try { localStorage.setItem(SCOPE_KEY, "1"); } catch (e) {}
+});
+document.querySelectorAll("#scopeBanner a[data-url]").forEach(a => {
+  a.addEventListener("click", e => {
+    e.preventDefault();
+    if (STATE.demo) window.open(a.dataset.url, "_blank");
+    else STATE.api.open_url(a.dataset.url);  // pywebview 下用系统默认浏览器打开
+  });
+});
+
+/* ======================= 无边框窗口控制 ======================= */
+function setMaxIcon(maximized) {
+  $("#winMaxIcon").innerHTML = maximized ? "&#xE923;" : "&#xE922;";
+  $("#winMax").title = maximized ? "还原" : "最大化";
+}
+$("#winMin").addEventListener("click", () => { STATE.api && STATE.api.win_minimize && STATE.api.win_minimize(); });
+$("#winMax").addEventListener("click", () => { STATE.api && STATE.api.win_toggle_maximize && STATE.api.win_toggle_maximize(); });
+$("#winClose").addEventListener("click", () => { STATE.api && STATE.api.win_close && STATE.api.win_close(); });
+
+/* ---- 边缘缩放：在窗口边缘 mousedown 时启动原生缩放 ---- */
+const RESIZE_EDGE = 7; // 边缘检测宽度（像素）
+function getResizeDir(x, y) {
+  const w = window.innerWidth, h = window.innerHeight;
+  const left = x < RESIZE_EDGE, right = x > w - RESIZE_EDGE;
+  const top = y < RESIZE_EDGE, bottom = y > h - RESIZE_EDGE;
+  if (left && top) return 4;       // HTTOPLEFT
+  if (right && top) return 5;       // HTTOPRIGHT
+  if (left && bottom) return 7;    // HTBOTTOMLEFT
+  if (right && bottom) return 8;   // HTBOTTOMRIGHT
+  if (left) return 1;              // HTLEFT
+  if (right) return 2;             // HTRIGHT
+  if (top) return 3;               // HTTOP
+  if (bottom) return 6;            // HTBOTTOM
+  return 0;
+}
+
+// 标题栏空白区域拖动窗口（原生处理：支持贴边吸附、最大化时拖动还原）
+const titlebar = document.querySelector("header");
+titlebar.addEventListener("mousedown", e => {
+  if (e.button !== 0) return;
+  if (e.target.closest("button,a,input,select,textarea,summary,.nodrag,.chip")) return;
+  // 边缘缩放优先于拖动（标题栏上下边缘可缩放）
+  const dir = getResizeDir(e.clientX, e.clientY);
+  if (dir && window.pywebview && window.pywebview.api && STATE.api && STATE.api.win_start_resize) {
+    STATE.api.win_start_resize(dir);
+    e.preventDefault();
+    return;
+  }
+  if (window.pywebview && window.pywebview.api) { window.pywebview.api.win_start_drag(); e.preventDefault(); }
+});
+
+// 窗口内容区域的边缘缩放（非标题栏区域）
+document.addEventListener("mousedown", e => {
+  if (e.button !== 0) return;
+  if (e.target.closest("header")) return; // 标题栏已单独处理
+  const dir = getResizeDir(e.clientX, e.clientY);
+  if (!dir) return;
+  if (STATE.api && STATE.api.win_start_resize) {
+    STATE.api.win_start_resize(dir);
+    e.preventDefault();
+  }
+});
+// 双击标题栏空白区域最大化/还原
+titlebar.addEventListener("dblclick", e => {
+  if (e.target.closest("button,a,input,select,textarea,.nodrag,.chip")) return;
+  if (window.pywebview && window.pywebview.api) window.pywebview.api.win_toggle_maximize();
+});
+
+/* ======================= 启动 ======================= */
+(async function init() {
+  const backend = await waitBackend(8000);
+  if (backend === "demo") {
+    STATE.demo = true; STATE.api = makeDemoApi();
+    $("#demoChip").classList.remove("hidden");
+  } else {
+    STATE.api = window.pywebview.api;
+  }
+  const st = await STATE.api.get_initial_state();
+  STATE.config = st.config; STATE.defaults = st.defaults || {};
+  STATE.carriers = st.carriers || {}; STATE.is_admin = !!st.is_admin;
+  $("#scopeKeyword").textContent = STATE.config.wifi_keyword || "DORM";  // 提示条关键字与设置同步
+
+  $("#adminChip").classList.toggle("hidden", STATE.is_admin);
+  $("#adminBanner").classList.toggle("hidden", STATE.is_admin);
+  renderTools();
+  renderSettings();
+  setBusy(false);
+
+  // 打开即自动检测一次
+  STATE.api.start_diagnose();
+})();
+</script>
+</body>
+</html>
