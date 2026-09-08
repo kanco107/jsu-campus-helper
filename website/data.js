@@ -86,10 +86,10 @@ window.SITE_DATA = {
             "管理员(修复网络需)"
           ]
         ],
-        "fileName": "校园网助手_v1.2.1_setup.exe",
+        "fileName": "Windows_v1.2.1_setup.exe",
         "btnText": "下载 Windows 安装包",
         "btnStyle": "primary",
-        "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.1/Windows_v1.2.1_setup.exe",
+        "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.2/Windows_v1.2.1_setup.exe",
         "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=vee26jeiymyq", "code": "ekx2" }
       },
       {
@@ -301,10 +301,10 @@ window.SITE_DATA = {
           "支持 Windows 10 及以上",
           "需要管理员权限"
         ],
-        "fileName": "校园网助手_v1.2.1_setup.exe",
+        "fileName": "Windows_v1.2.1_setup.exe",
         "btnText": "下载",
         "btnStyle": "primary",
-        "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.1/Windows_v1.2.1_setup.exe",
+        "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.2/Windows_v1.2.1_setup.exe",
         "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=vee26jeiymyq", "code": "ekx2" }
       },
       {
