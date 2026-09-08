@@ -98,7 +98,7 @@ window.SITE_DATA = {
         "specs": [
           [
             "版本",
-            "v1.2.1 (code 3)"
+            "v1.2.2 (code 4)"
           ],
           [
             "大小",
@@ -121,11 +121,11 @@ window.SITE_DATA = {
             "仅网络权限,无系统修改"
           ]
         ],
-        "fileName": "校园网助手v1.2.1.apk",
+        "fileName": "校园网助手v1.2.2.apk",
         "btnText": "下载 Android APK",
         "btnStyle": "accent",
-        "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.1/Android.v1.2.1.apk",
-        "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=fiaqEvbQbYZn", "code": "pib8" }
+        "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.2/Android_v1.2.2.apk",
+        "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=iQvmiyryYrau", "code": "0stb" }
       }
     ]
   },
@@ -311,16 +311,16 @@ window.SITE_DATA = {
         "title": "Android 检测版",
         "intro": "只检测不改系统,只要网络权限。装时可能提示\"未知来源\",允许就行。",
         "specs": [
-          "版本 v1.2.1 (versionCode 3)",
+          "版本 v1.2.2 (versionCode 4)",
           "文件大小 ≈ 3.1 MB",
           "支持 Android 10 及以上",
           "无需 root,无需特殊权限"
         ],
-        "fileName": "校园网助手v1.2.1.apk",
+        "fileName": "校园网助手v1.2.2.apk",
         "btnText": "下载",
         "btnStyle": "accent",
-        "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.1/Android.v1.2.1.apk",
-        "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=fiaqEvbQbYZn", "code": "pib8" }
+        "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.2/Android_v1.2.2.apk",
+        "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=iQvmiyryYrau", "code": "0stb" }
       }
     ],
     "warnBanner": {

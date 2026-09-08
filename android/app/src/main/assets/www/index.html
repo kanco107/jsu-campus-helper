@@ -176,6 +176,21 @@
         <button class="btn" data-goto-settings="app">去应用权限</button>
       </div>
     </details>
+
+    <details class="acc">
+      <summary><span class="ficon" data-icon="signal"></span>关闭移动数据后重试
+        <span class="chev" data-icon="chev"></span></summary>
+      <div class="body">
+        当同时开启校园 WiFi（未认证）和移动数据时，Android 系统会把流量导向移动数据通道，
+        导致校园网检测误判为"非校园网环境"，应用内登录也会失败（认证请求到不了校园网服务器）。
+        <ol>
+          <li>从屏幕顶部下滑打开快捷设置</li>
+          <li>关闭「移动数据」开关（保留 WiFi 开启）</li>
+          <li>回到「检测」页重新诊断</li>
+        </ol>
+        <button class="btn" data-goto-settings="cellular">去网络设置</button>
+      </div>
+    </details>
   </section>
 
   <!-- ================= 设置 ================= -->

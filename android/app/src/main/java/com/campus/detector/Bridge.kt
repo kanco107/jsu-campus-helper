@@ -65,7 +65,8 @@ class Bridge(private val activity: MainActivity) {
 
     /**
      * 跳转系统设置（修复引导用）：
-     * wifi → WLAN 列表；proxy → 网络总设置（含 VPN/代理）；app → 应用详情（给本应用网络权限）
+     * wifi → WLAN 列表；proxy → 网络总设置（含 VPN/代理）；
+     * app → 应用详情（给本应用网络权限）；cellular → 移动数据设置(关闭移动数据)
      */
     @JavascriptInterface
     fun openSystemSettings(target: String) {
@@ -73,6 +74,8 @@ class Bridge(private val activity: MainActivity) {
             "wifi" -> Settings.ACTION_WIFI_SETTINGS
             "proxy" -> Settings.ACTION_WIRELESS_SETTINGS
             "app" -> Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+            // 移动数据开关在系统设置页有,跳到网络总设置让用户手动找到
+            "cellular" -> Settings.ACTION_WIRELESS_SETTINGS
             else -> Settings.ACTION_SETTINGS
         }
         try {

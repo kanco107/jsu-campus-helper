@@ -2,11 +2,15 @@ package com.campus.detector
 
 import android.content.Context
 import android.net.ConnectivityManager
+import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
+import android.os.Build
 import android.provider.Settings
 import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.net.NetworkInterface
+import java.net.Socket
 
 /**
  * 基于 Java API 的检测项：连接状态、SSID、DNS、系统代理、169.254。
@@ -16,15 +20,30 @@ object NetChecks {
 
     data class ConnState(val status: String, val detail: String, val onWifi: Boolean)
 
-    /** 网络连接状态：是否有网、走的是什么通道 */
+    /**
+     * 网络连接状态：是否有网、走的是什么通道。
+     *
+     * 关键场景：用户连校园 WiFi（未认证）+ 同时开了移动数据。
+     * 此时系统 activeNetwork 默认是移动数据（因 WiFi 未 validated），
+     * 所有流量走移动数据通道,导致校园网网关 ping 失败 → 误判为"非校园网"。
+     * 这种情况返回 status=ok 但 detail 显式标注"流量可能走移动数据",
+     * 上层 Engine 据此调整判定逻辑。
+     */
     fun connectionState(ctx: Context): ConnState {
         val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val caps = cm.getNetworkCapabilities(cm.activeNetwork)
+        val activeNet = cm.activeNetwork ?: return ConnState("fail", "当前无任何网络连接（未连 WiFi 也没有移动数据）", false)
+        val caps = cm.getNetworkCapabilities(activeNet)
             ?: return ConnState("fail", "当前无任何网络连接（未连 WiFi 也没有移动数据）", false)
+        // getNetworkCapabilities 返回可空类型,上面 elvis 已过滤 null,这里安全解引用
         val wifi = caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
         val cell = caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
         val validated = caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+        // WiFi 已连但未通过网络验证 + 同时有移动数据 → 系统默认走移动数据
+        // 这是校园网未认证 + 移动数据同时开启的典型场景
+        val wifiUnvalidated = wifi && !validated
+        val trafficOnCell = wifiUnvalidated && cell
         val via = when {
+            trafficOnCell -> "WiFi（未认证）+ 移动数据，流量走移动数据"
             wifi && cell -> "WiFi + 移动数据同时在线"
             wifi -> "WiFi"
             cell -> "移动数据"
@@ -32,6 +51,59 @@ object NetChecks {
         }
         val extra = if (validated) "" else "，系统标记网络受限"
         return ConnState("ok", "已连接（$via$extra）", wifi)
+    }
+
+    /**
+     * 检测当前是否处于"WiFi 已连但流量被移动数据劫持"状态。
+     * 返回 true 时表示检测/认证请求必须显式绑定 WiFi 网络,否则到不了校园网。
+     */
+    fun isCellularHijackingWifi(ctx: Context): Boolean {
+        val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNet = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(activeNet) ?: return false
+        // activeNetwork 是移动数据 + 存在 WiFi 网络(可能未 validated)
+        if (!caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) return false
+        return cm.allNetworks.any { n ->
+            val c = cm.getNetworkCapabilities(n)
+            c != null && c.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+        }
+    }
+
+    /**
+     * 找到当前可用的 WiFi Network 对象。
+     * 用于绑定到 WiFi 网络做探测/认证请求,绕过系统默认路由(可能走移动数据)。
+     */
+    fun wifiNetwork(ctx: Context): Network? {
+        val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        // allNetworks 比 activeNetwork 更全面：未 validated 的 WiFi 也能找到
+        for (n in cm.allNetworks) {
+            val caps = cm.getNetworkCapabilities(n) ?: continue
+            if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) &&
+                caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) {
+                return n
+            }
+        }
+        return null
+    }
+
+    /**
+     * 绑定到指定 Network 的 TCP 探测：用 Network.getSocketFactory()
+     * 创建 Socket,流量一定走该网络,不会被系统默认路由劫持。
+     *
+     * Android 5.0+(API 23+) 支持 Network.openConnection / SocketFactory,
+     * 本应用 minSdk=29,可放心使用。
+     */
+    fun tcpProbeOnNetwork(network: Network, host: String, port: Int,
+                           timeoutMs: Int = 2000): Boolean {
+        return try {
+            val factory = network.socketFactory
+            val socket = factory.createSocket()
+            socket.connect(InetSocketAddress(host, port), timeoutMs)
+            socket.close()
+            true
+        } catch (_: Exception) {
+            false
+        }
     }
 
     /** 当前 WiFi 的网关地址（取默认路由的网关，用于与配置网关比对） */

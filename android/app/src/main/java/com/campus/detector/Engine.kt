@@ -118,15 +118,20 @@ class Engine(private val ctx: Context) {
     private fun checkConnection(ctx: Context, cfg: JSONObject): Pair<String, String> {
         val s = NetChecks.connectionState(ctx)
         if (s.status != "ok") return Pair(s.status, s.detail)
+        // 检测移动数据劫持 WiFi 场景,提示用户关闭移动数据
+        val hijack = NetChecks.isCellularHijackingWifi(ctx)
+        val hijackHint = if (hijack) {
+            "；检测到 WiFi 已连但流量被移动数据劫持，校园网检测可能误判,建议关闭移动数据后重试"
+        } else ""
         // 有网的话顺手 ping 一个域名，给用户直观的"网络正常"反馈
         val host = cfg.optString("public_test_host")
         val pr = Ping.ping(host, 2, 2)
         return if (pr.ok) {
-            Pair("ok", "${s.detail}；$host 可达（${pr.detail}）")
+            Pair("ok", "${s.detail}；$host 可达（${pr.detail}）$hijackHint")
         } else if (Ping.tcpProbe(host, 80)) {
-            Pair("ok", "${s.detail}；$host 可达（ICMP 被禁，TCP 端口确认）")
+            Pair("ok", "${s.detail}；$host 可达（ICMP 被禁，TCP 端口确认）$hijackHint")
         } else {
-            Pair("warn", "${s.detail}；但无法访问公网 $host（可能处于受限网络环境）")
+            Pair("warn", "${s.detail}；但无法访问公网 $host（可能处于受限网络环境）$hijackHint")
         }
     }
 
@@ -196,6 +201,16 @@ class Engine(private val ctx: Context) {
         if (Ping.tcpProbe(gateway, 80)) {
             return Pair("ok", "网关 $gateway 可达（ICMP 被禁用，经 TCP 80 端口确认）")
         }
+        // 关键:移动数据劫持场景下,系统默认路由走移动数据,ping 和默认 TCP 都到不了校园网网关。
+        // 此时若能找到 WiFi Network,绑定到它做 TCP 探测可以确认 WiFi 通道能否访问网关。
+        // 这样就不会把"已连校园 WiFi + 开了移动数据"误判为"非校园网环境"。
+        val wifiNet = NetChecks.wifiNetwork(ctx)
+        if (wifiNet != null && NetChecks.tcpProbeOnNetwork(wifiNet, gateway, 80)) {
+            return Pair(
+                "ok",
+                "网关 $gateway 经 WiFi 网络可达（系统默认走移动数据,但 WiFi 通道可达校园网关）。建议关闭移动数据后重新检测"
+            )
+        }
         val sysGw = NetChecks.gatewayIp(ctx)
         val note = if (sysGw.isNotEmpty() && sysGw != gateway) {
             "；本机当前网关为 $sysGw（与配置的 $gateway 不一致，如需检测其它网络请在设置中修改网关）"
@@ -227,7 +242,8 @@ class Engine(private val ctx: Context) {
         val noIp = llStatus == "fail" || llStatus == "warn"
         if (noIp) return Pair("skip", "本机未获取到有效 IP，无法检测认证状态")
         if (!gwOk) return Pair("skip", "校园网网关不可达，认证检测已跳过（当前可能不在校园网内）")
-        val st = Drcom.checkStatus(cfg)
+        // 把 ctx 传给 Drcom,让它在移动数据劫持场景下绑定 WiFi Network 发请求
+        val st = Drcom.checkStatus(cfg, ctx = ctx)
         if (!st.reachable) {
             return Pair("skip", "认证服务器不可达（当前可能不在校园网内，已跳过）")
         }
@@ -283,6 +299,9 @@ class Engine(private val ctx: Context) {
         val extOk = results["external"]?.optString("status") == "ok"
         // 没拿到 IP 时不应判为"非校园网"，应判为"无 IP"独立状态
         val noIp = linkLocalBad && !gwOk
+        // 移动数据劫持场景:WiFi 已连但流量被移动数据劫持。
+        // 此时 intranet 检测通过(绑定 WiFi 探测成功) → gwOk=true → 不会误判为非校园网。
+        // 但若 WiFi 通道也访问不到网关(真不在校园网),仍应判为 nonCampus。
         val nonCampus = !connFail && !gwOk && !noIp
         val failCount = results.values.count { it.optString("status") == "fail" }
         val warnCount = results.values.count { it.optString("status") == "warn" }
@@ -335,10 +354,10 @@ class Engine(private val ctx: Context) {
                 if (cfg.optBoolean("remember_password")) patch["saved_password"] = password
                 ConfigStore.patch(ctx, patch)
 
-                val r = Drcom.login(cfg, account, carrier, password)
+                val r = Drcom.login(cfg, account, carrier, password, ctx = ctx)
                 if (r.ok) {
                     Events.post("log", mapOf("text" to "登录成功，正在复核认证状态…"))
-                    val st = Drcom.checkStatus(cfg)
+                    val st = Drcom.checkStatus(cfg, ctx = ctx)
                     if (st.reachable && st.online == false) {
                         Events.post(
                             "log",
@@ -378,7 +397,7 @@ class Engine(private val ctx: Context) {
         scope.launch {
             try {
                 val cfg = ConfigStore.load(ctx)
-                val st = Drcom.checkStatus(cfg)
+                val st = Drcom.checkStatus(cfg, ctx = ctx)
                 Events.post(
                     "authStatus",
                     mapOf(
