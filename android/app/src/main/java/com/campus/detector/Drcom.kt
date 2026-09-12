@@ -136,16 +136,34 @@ object Drcom {
                 .firstOrNull { obj.has(it) && !obj.optString(it).isNullOrEmpty() }
                 ?.let { obj.optString(it) } ?: ""
             val carrier = if (account.contains('@')) account.substringAfter('@') else ""
-            // 在线判断：任一布尔型在线字段为真；部分版本用 code=="0" 表示已在线
-            val online: Boolean? = when {
-                listOf("is_authorized", "online", "is_login", "islogon").any {
-                    obj.has(it) && (obj.optBoolean(it, false) || obj.optString(it) == "1")
-                } -> true
-                obj.has("code") && obj.optString("code") == "0" -> true
-                obj.has("result") && obj.optString("result") == "0" && account.isNotEmpty() -> true
-                else -> null
-            }
             val msg = obj.optString("error", "").ifEmpty { obj.optString("msg", "") }
+
+            // 在线判断分两级，必须同时识别"在线"和"明确离线"，
+            // 否则未登录响应（如 {"result":1,"online":0,"msg":"not online"}）
+            // 会被报成"无法确定认证状态"。
+            // 1) 显式在线标志：不同固件字段名不同，只取第一个出现的字段
+            //    （与桌面端 core.py 语义一致，兼容 1/yes/true/ok 与 0/no/false）
+            var online: Boolean? = null
+            for (key in listOf("is_authorized", "online", "is_login", "islogon")) {
+                if (obj.has(key)) {
+                    val v = obj.optString(key).trim().lowercase()
+                    online = v in setOf("1", "yes", "true", "ok")
+                    break
+                }
+            }
+            // 2) 没有布尔字段时看结果码：
+            //    真实 drcom 在线通常 result=0；未登录常见 result=1/ret_code=2
+            if (online == null) {
+                val result = obj.optString("result", "")
+                val retCode = obj.optString("ret_code", "")
+                val code = obj.optString("code", "")
+                online = when {
+                    result == "0" || retCode == "0" || code == "0" -> true
+                    result == "1" || retCode in setOf("1", "2") || code == "1" -> false
+                    msg.contains("not online", ignoreCase = true) -> false
+                    else -> null
+                }
+            }
             AuthStatus(true, online, account.removeSuffix("@$carrier"), carrier, msg)
         } catch (_: Exception) {
             AuthStatus(true, null, "", "", "JSONP 解析失败")

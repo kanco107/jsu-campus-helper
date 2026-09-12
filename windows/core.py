@@ -625,37 +625,72 @@ class CampusNetworkFixer:
 
     # ---------- 基础网络操作 ----------
 
-    def ping_host(self, host, timeout=None, quiet=False, source_ip=None):
+    def ping_host(self, host, timeout=None, quiet=False, source_ip=None, retries=0):
+        """Ping 指定主机，输出含 TTL 视为可达。
+
+        :param retries: 首个包丢失时的额外尝试次数。校园 WiFi 单包丢包很常见
+            （刚关联 / DHCP 更新 / 信号一般），关键判定必须多试一包，
+            否则一次丢包就会被误判为“不通 / 未认证”，进而触发不必要的
+            DHCP 重置、DNS 切换甚至误报修复失败。
+        """
         timeout = timeout or self.config["ping_timeout"]
         command = ["ping", "-n", "1", "-w", str(int(timeout * 1000))]
         if source_ip:
             command += ["-S", source_ip]  # 绑定源地址：只测指定网卡的连通性
         command.append(host)
-        try:
-            output = subprocess.check_output(
-                command,
-                stderr=subprocess.STDOUT,
-                timeout=timeout + 5,
-            )
-        except subprocess.TimeoutExpired:
-            if not quiet:
-                self.log(f"Ping {host} 超时。")
-            return False
-        except subprocess.CalledProcessError as e:
-            if not quiet:
-                self.log(f"Ping {host} 失败: {_decode_bytes(e.output).strip()}")
-            return False
-        except OSError as e:
-            if not quiet:
-                self.log(f"Ping {host} 时发生错误: {e}")
-            return False
+        attempts = max(1, int(retries) + 1)
+        for attempt in range(attempts):
+            try:
+                output = subprocess.check_output(
+                    command,
+                    stderr=subprocess.STDOUT,
+                    timeout=timeout + 5,
+                )
+            except subprocess.TimeoutExpired:
+                if attempt < attempts - 1:
+                    time.sleep(0.5)
+                    continue
+                if not quiet:
+                    self.log(f"Ping {host} 超时。")
+                return False
+            except subprocess.CalledProcessError as e:
+                if attempt < attempts - 1:
+                    time.sleep(0.5)
+                    continue
+                if not quiet:
+                    self.log(f"Ping {host} 失败: {_decode_bytes(e.output).strip()}")
+                return False
+            except OSError as e:
+                if not quiet:
+                    self.log(f"Ping {host} 时发生错误: {e}")
+                return False
 
-        decoded = _decode_bytes(output)
-        if "TTL" in decoded:
-            return True
-        if not quiet:
-            self.log(f"Ping 输出（调试用）: {decoded.strip()}")
+            decoded = _decode_bytes(output)
+            if "TTL" in decoded:
+                return True
+            if attempt < attempts - 1:
+                time.sleep(0.5)
+                continue
+            if not quiet:
+                self.log(f"Ping 输出（调试用）: {decoded.strip()}")
         return False
+
+    def wait_internet(self, timeout=25, probe_timeout=3):
+        """登录成功后轮询等待外网真正放行。
+
+        drcom 登录请求返回成功只代表账号认证通过，网关 ACL 生效通常有
+        几秒延迟；原来只 sleep 2 秒再发单个 ping 包，极易把“即将恢复”
+        误判成“认证后仍无法访问外网”。这里在 timeout 秒内反复探测，
+        每次探测本身发 2 个包抗丢包，任一成功即视为已放行。
+        """
+        host = self.config["public_test_host"]
+        deadline = time.time() + timeout
+        while True:
+            if self.ping_host(host, timeout=probe_timeout, quiet=True, retries=1):
+                return True
+            if time.time() >= deadline:
+                return False
+            time.sleep(2)
 
     def _run(self, command, timeout=60):
         """执行系统命令。
@@ -819,7 +854,8 @@ class CampusNetworkFixer:
             if not ip:
                 continue
             # 以该网卡的 IP 为源地址 ping 网关：只有真正连着校园网的网卡才通
-            if self.ping_host(self.config["gateway"], timeout=3, quiet=True, source_ip=ip):
+            if self.ping_host(self.config["gateway"], timeout=3, quiet=True,
+                              source_ip=ip, retries=1):
                 result.append(card)
         return result
 
@@ -962,7 +998,7 @@ class CampusNetworkFixer:
         """确保存在可用网络连接；必要时交互式选择 WiFi。返回可用网卡列表。"""
         cfg = self.config
         netcards = self.get_enabled_physical_netcards_with_ipv4()
-        if netcards and self.ping_host(cfg["gateway"], timeout=5, quiet=True):
+        if netcards and self.ping_host(cfg["gateway"], timeout=4, quiet=True, retries=1):
             checks.append(self._check("adapter", "网络连接", "ok",
                                       detail="检测到可用连接：" + "、".join(netcards)))
             return netcards
@@ -1559,7 +1595,8 @@ class CampusNetworkFixer:
 
         # 外网连通性快速检测：一开始就 ping 一个公网地址，给用户直观的"网络是否正常"反馈
         self.log(f"正在检测外网连通性（{cfg['public_test_host']}）...")
-        external_ok = self.ping_host(cfg["public_test_host"])
+        # 每轮 2 个包、超时 4 秒，避免 WiFi 单包丢包把“已联网”误判为“未认证”
+        external_ok = self.ping_host(cfg["public_test_host"], timeout=4, retries=1)
         if external_ok:
             checks.append(self._check("external", "外网连通", "ok",
                                       detail=f"网络正常（{cfg['public_test_host']} 可达）"))
@@ -1656,7 +1693,7 @@ class CampusNetworkFixer:
                                       detail="未连接 WiFi，跳过"))
 
         self.log(f"正在检测内网连通性（网关 {cfg['gateway']}）...")
-        intranet_ok = self.ping_host(cfg["gateway"])
+        intranet_ok = self.ping_host(cfg["gateway"], timeout=4, retries=1)
         non_campus = not intranet_ok
         if intranet_ok:
             checks.append(self._check("intranet", "校园网内网", "ok",
@@ -1689,7 +1726,7 @@ class CampusNetworkFixer:
 
         # DNS 检测：非校园网环境下也需要检测（用户可能有 DNS 配置问题）
         self.log(f"正在检测域名解析（{cfg['test_domain']}）...")
-        if self.ping_host(cfg["test_domain"]):
+        if self.ping_host(cfg["test_domain"], timeout=5, retries=1):
             checks.append(self._check("dns", "域名解析", "ok",
                                       detail=f"{cfg['test_domain']} 解析正常"))
         else:
@@ -1748,7 +1785,7 @@ class CampusNetworkFixer:
         # —— 前置检查：必须在校园网环境下才能修复 ——
         # 非校园网环境（家庭宽带 / 手机热点等）下执行修复会修改网络配置，
         # 可能导致当前网络无法上网，因此直接拒绝并给出明确警告。
-        if not self.ping_host(cfg["gateway"], timeout=5, quiet=True):
+        if not self.ping_host(cfg["gateway"], timeout=4, quiet=True, retries=1):
             # 网关不可达要区分两种情况：
             # 1) 真·非校园网（已有正常 IP、也没连校园 WiFi，如家庭宽带/手机热点）
             #    → 拒绝修复，避免改坏当前网络；
@@ -1891,8 +1928,8 @@ class CampusNetworkFixer:
         for card in netcards:
             self.log(f"正在通过 {card} 进行修复...")
 
-            # —— 第 2 步：内网连通性 ——
-            if self.ping_host(cfg["gateway"]):
+            # —— 第 2 步：内网连通性（2 个包抗丢包，避免 WiFi 单包丢失触发无谓的 DHCP 重置） ——
+            if self.ping_host(cfg["gateway"], timeout=4, retries=1):
                 self.log("内部网络连接正常。")
                 check_intranet.update(status="ok", problem="", fix="",
                                       detail=f"已连通网关 {cfg['gateway']}（网卡：{card}）")
@@ -1900,7 +1937,7 @@ class CampusNetworkFixer:
                 self.log(f"无法连接内网，正在将 {card} 设置为 DHCP 并重新获取 IP/DNS...")
                 self._record_network_original(card)
                 self.set_dhcp_and_renew(card)
-                if self.ping_host(cfg["gateway"]):
+                if self.ping_host(cfg["gateway"], timeout=4, retries=1):
                     actions.append({"step": f"将 {card} 恢复为 DHCP 并重新获取 IP", "result": "success"})
                     check_intranet.update(status="ok", problem="", fix="",
                                           detail="恢复 DHCP 后内网已恢复连通")
@@ -1913,7 +1950,7 @@ class CampusNetworkFixer:
                     continue
 
             # —— 第 3 步：校园网认证（外网） ——
-            if self.ping_host(cfg["public_test_host"]):
+            if self.ping_host(cfg["public_test_host"], timeout=4, retries=1):
                 self.log("外部网络连接正常，校园网认证有效。")
                 check_auth.update(status="ok", problem="", fix="",
                                   detail="认证有效，可正常访问外网")
@@ -1921,61 +1958,58 @@ class CampusNetworkFixer:
                 self.log("无法访问外网，需要登录校园网认证。")
                 creds = self._get_credentials()
                 auth_ok = False
+                login_attempts = 0  # 账号/运营商错误时允许在本次修复内直接重试，不必重走整个流程
+                while creds is not None and login_attempts < 3:
+                    login_attempts += 1
+                    if isinstance(creds, dict) and creds.get("portal_login"):
+                        # 用户已在弹出的认证页面中完成登录，无需重复调用 login
+                        self.log("已通过认证页面完成登录。")
+                        if creds.get("account"):
+                            self.log(f"认证账号：{creds['account']}")
+                        self._remember_auth_info(creds.get("account", ""), creds.get("carrier", ""))
+                        auth_ok = self._post_auth_verify(actions, check_auth,
+                                                         "通过认证页面完成登录")
+                        break
+
+                    student_id, password = creds
+                    carrier_used = self.carrier_override or self.config.get("carrier", "cmcc")
+                    if self.login(student_id, password):
+                        self._remember_auth_info(student_id, carrier_used)
+                        auth_ok = self._post_auth_verify(
+                            actions, check_auth,
+                            f"使用账号 {student_id} 登录校园网认证")
+                        break
+
+                    # 登录被拒绝（RD103 账号密码错误 / unbind 运营商线路选错等）：
+                    # 弹窗重试，学号预填，用户只需改运营商或密码
+                    if login_attempts < 3:
+                        self.log("登录被拒绝，常见原因为运营商线路选错或学号/密码有误，"
+                                 "请在弹出的窗口中修改后重试。")
+                        self.config["last_account"] = student_id  # 仅内存预填，成功后才随配置落盘
+                        creds = self._get_credentials()
+                    else:
+                        actions.append({"step": "登录校园网认证", "result": "fail",
+                                        "detail": "连续 3 次登录失败，请核对学号、密码与运营商线路"})
+                        check_auth.update(status="fail",
+                                          problem="登录认证失败",
+                                          fix="请检查学号、密码与运营商线路选择是否正确；"
+                                              "仍失败可能是账号欠费/未绑定运营商，请联系网络管理员")
                 if creds is None:
                     actions.append({"step": "登录校园网认证", "result": "skip",
                                     "detail": "未提供学号密码，已跳过认证"})
                     check_auth.update(status="fail",
                                       problem="校园网认证已失效或未认证",
                                       fix="再次点击“一键修复”，输入学号密码或选择“打开认证页面登录”")
-                elif isinstance(creds, dict) and creds.get("portal_login"):
-                    # 用户已在弹出的认证页面中完成登录，无需重复调用 login
-                    self.log("已通过认证页面完成登录。")
-                    if creds.get("account"):
-                        self.log(f"认证账号：{creds['account']}")
-                    self._remember_auth_info(creds.get("account", ""), creds.get("carrier", ""))
-                    time.sleep(2)
-                    auth_ok = self.ping_host(cfg["public_test_host"])
-                    if auth_ok:
-                        actions.append({"step": "通过认证页面完成登录", "result": "success"})
-                        check_auth.update(status="ok", problem="", fix="",
-                                          detail="认证成功，可正常访问外网")
-                    else:
-                        actions.append({"step": "通过认证页面完成登录", "result": "fail",
-                                        "detail": "登录后仍无法访问外网"})
-                        check_auth.update(status="fail",
-                                          problem="认证后仍无法访问外网",
-                                          fix="请确认账号是否欠费/在线设备超限，或联系网络管理员")
-                else:
-                    student_id, password = creds
-                    carrier_used = self.carrier_override or self.config.get("carrier", "cmcc")
-                    if self.login(student_id, password):
-                        actions.append({"step": f"使用账号 {student_id} 登录校园网认证", "result": "success"})
-                        self._remember_auth_info(student_id, carrier_used)
-                        time.sleep(2)
-                        auth_ok = self.ping_host(cfg["public_test_host"])
-                        if auth_ok:
-                            check_auth.update(status="ok", problem="", fix="",
-                                              detail="认证成功，可正常访问外网")
-                        else:
-                            actions.append({"step": "验证外网连通性", "result": "fail",
-                                            "detail": "认证后仍无法访问外网"})
-                            check_auth.update(status="fail",
-                                              problem="认证后仍无法访问外网",
-                                              fix="请确认账号是否欠费/在线设备超限，或联系网络管理员")
-                    else:
-                        actions.append({"step": "登录校园网认证", "result": "fail",
-                                        "detail": "登录请求失败"})
-                        check_auth.update(status="fail",
-                                          problem="登录认证失败",
-                                          fix="请检查学号、密码与运营商线路选择是否正确")
                 if not auth_ok:
                     continue
 
             # —— 第 4 步：域名解析 ——
+            # 说明：netsh 切换 DNS 后系统并非瞬间生效，且认证刚放行时 DNS 通路
+            # 可能比 ICMP 晚几秒才通；因此每次切换后都清缓存并等待，再用 2 个包探测。
             self.log("开始检测域名解析服务。")
             self.flush_dns_cache()
             actions.append({"step": "清除 DNS 缓存", "result": "success"})
-            if self.ping_host(cfg["test_domain"]):
+            if self.ping_host(cfg["test_domain"], timeout=5, retries=1):
                 check_dns.update(status="ok", problem="", fix="",
                                  detail=f"{cfg['test_domain']} 解析正常")
                 fixed = True
@@ -1986,7 +2020,8 @@ class CampusNetworkFixer:
             self.set_custom_dns(card, cfg["dns_primary"], cfg["dns_secondary"])
             actions.append({"step": f"设置 DNS 为 {cfg['dns_primary']} / {cfg['dns_secondary']}",
                             "result": "success"})
-            if self.ping_host(cfg["test_domain"]):
+            self.flush_dns_cache()  # 让新 DNS 立即生效
+            if self.ping_host(cfg["test_domain"], timeout=5, retries=1):
                 check_dns.update(status="ok", problem="", fix="",
                                  detail="使用公共 DNS 后解析恢复正常")
                 fixed = True
@@ -1996,16 +2031,18 @@ class CampusNetworkFixer:
             self.set_custom_dns(card, cfg["campus_dns_primary"], cfg["campus_dns_secondary"])
             actions.append({"step": f"设置 DNS 为校内 {cfg['campus_dns_primary']} / {cfg['campus_dns_secondary']}",
                             "result": "success"})
-            if self.ping_host(cfg["test_domain"]):
+            self.flush_dns_cache()
+            if self.ping_host(cfg["test_domain"], timeout=5, retries=1):
                 check_dns.update(status="ok", problem="", fix="",
                                  detail="使用校内 DNS 后解析恢复正常")
                 fixed = True
                 break
 
-            self.log("域名解析仍然失败，正在将 DNS 恢复为 DHCP 并再次尝试。")
+            self.log("校内 DNS 也无效，正在将 DNS 恢复为 DHCP 并再次尝试。")
             self.set_dhcp_and_renew(card)
             actions.append({"step": "将 DNS 恢复为 DHCP 自动获取", "result": "success"})
-            if self.ping_host(cfg["test_domain"]):
+            self.flush_dns_cache()
+            if self.ping_host(cfg["test_domain"], timeout=5, retries=1):
                 check_dns.update(status="ok", problem="", fix="",
                                  detail="恢复 DHCP 后解析恢复正常")
                 fixed = True
@@ -2017,9 +2054,51 @@ class CampusNetworkFixer:
                              problem=f"无法解析 {cfg['test_domain']}",
                              fix="已尝试多种 DNS 方案均无效，可能为本地网络故障，请联系网络管理员")
 
+        # —— 终检复核：公网 IP 与域名必须同时真正可达，才能报告“网络一切正常” ——
+        # 过程中的单次 ping 成功可能是瞬时假阳性（ACL 刚放行、单包侥幸），
+        # 不复核就会出现“提示修复完成但网页依旧打不开”的误报。
+        if fixed:
+            self.log("正在做最终连通性复核...")
+            final_inet = self.ping_host(cfg["public_test_host"], timeout=4,
+                                        quiet=True, retries=1)
+            final_dns = self.ping_host(cfg["test_domain"], timeout=5,
+                                       quiet=True, retries=1)
+            if not final_inet:
+                fixed = False
+                check_auth.update(status="fail",
+                                  problem="最终复核时外网仍不可达",
+                                  fix="校园网连接可能不稳定，请稍等片刻后重新“一键检测”；"
+                                      "反复出现请检查 WiFi 信号或联系网络管理员")
+            if not final_dns:
+                fixed = False
+                check_dns.update(status="fail",
+                                 problem=f"最终复核时无法解析 {cfg['test_domain']}",
+                                 fix="DNS 服务仍异常，可在“高级工具”中重新切换 DNS 后再试")
+
         ok = fixed and not any(c["status"] in ("fail", "warn") for c in checks)
         self.log("一键修复完成：" + ("网络一切正常。" if ok else "仍有问题未解决，请查看各项目详情。"))
         return self._report(ok, checks, actions)
+
+    def _post_auth_verify(self, actions, check_auth, success_action):
+        """认证请求成功后的统一收尾：轮询等待网关放行，再确认外网真正可达。
+
+        drcom 返回成功只代表账号通过校验，网关 ACL 生效通常有几秒延迟；
+        旧逻辑只 sleep 2 秒再发单个 ping 包，丢包或延迟时会把其实已经
+        成功的认证误判为“认证后仍无法访问外网”。
+        """
+        self.log("登录请求已成功，正在等待校园网网关放通网络连接...")
+        if self.wait_internet(25):
+            actions.append({"step": success_action, "result": "success"})
+            check_auth.update(status="ok", problem="", fix="",
+                              detail="认证成功，可正常访问外网")
+            return True
+        actions.append({"step": "验证外网连通性", "result": "fail",
+                        "detail": "登录成功后等待 25 秒仍无法访问外网"})
+        check_auth.update(status="fail",
+                          problem="认证后仍无法访问外网",
+                          fix="请确认账号是否欠费/在线设备超限，或稍等片刻后重新检测；"
+                              "仍异常请联系网络管理员")
+        return False
 
 
 # ============================ 命令行入口 ============================

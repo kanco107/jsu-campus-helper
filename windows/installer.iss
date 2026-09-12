@@ -1,9 +1,21 @@
-; 校园网助手 - Inno Setup 安装脚本
+﻿; 校园网助手 - Inno Setup 安装脚本
+; 完整版：ISCC installer.iss
+; 精简版（不含 .NET 4.8 / WebView2 离线包）：
+;   ISCC /DLITE /D"MyAppDir=E:\xyw\校园网助手\dist_lite\校园网助手" installer.iss
+#ifndef MyAppVersion
+  #define MyAppVersion "1.2.3"
+#endif
+#ifndef MyAppDir
+  #define MyAppDir "E:\xyw\校园网助手\dist\校园网助手"
+#endif
 #define MyAppName "校园网助手"
-#define MyAppVersion "1.2.1"
 #define MyAppPublisher "校园网助手"
 #define MyAppExeName "校园网助手.exe"
-#define MyAppDir "E:\xyw\校园网助手\dist\校园网助手"
+#ifdef LITE
+  #define MyOutName "校园网助手_v" + MyAppVersion + "_lite_setup"
+#else
+  #define MyOutName "校园网助手_v" + MyAppVersion + "_setup"
+#endif
 
 [Setup]
 AppId={{8B3E2F1A-4C5D-6E7F-8A9B-0C1D2E3F4A5B}
@@ -14,7 +26,7 @@ DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 OutputDir=E:\xyw\校园网助手\installer
-OutputBaseFilename=校园网助手_v{#MyAppVersion}_setup
+OutputBaseFilename={#MyOutName}
 SetupIconFile=E:\xyw\校园网助手\assets\logo.ico
 Compression=lzma2
 SolidCompression=yes
@@ -30,9 +42,12 @@ ArchitecturesAllowed=x64compatible
 Name: "chinesesimp"; MessagesFile: "ChineseSimplified.isl"
 
 [Tasks]
+; —— 运行环境（仅完整版提供离线包；精简版不含，需系统已自带或自行联网安装）——
+#ifndef LITE
 ; —— 运行环境（仅在目标系统“缺失”对应组件时才显示该勾选项；默认勾选）——
 Name: "install_dotnet"; Description: "安装 .NET Framework 4.8 运行环境（必需）"; GroupDescription: "运行环境（缺少会导致程序无法运行，建议保持勾选）:"; Check: not IsDotNet48Installed
 Name: "install_webview2"; Description: "安装 Edge WebView2 运行环境（必需）"; GroupDescription: "运行环境（缺少会导致程序无法运行，建议保持勾选）:"; Check: not IsWebView2Installed
+#endif
 ; —— 附加图标 ——
 Name: "desktopicon"; Description: "创建桌面快捷方式"; GroupDescription: "附加图标:"; Flags: unchecked
 Name: "startmenuicon"; Description: "创建开始菜单快捷方式"; GroupDescription: "附加图标:"
@@ -40,10 +55,12 @@ Name: "startmenuicon"; Description: "创建开始菜单快捷方式"; GroupDescr
 [Files]
 ; 打包整个 dist 目录（包含 exe、依赖 DLL、资源文件）
 Source: "{#MyAppDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+#ifndef LITE
 ; .NET Framework 4.8 离线安装包（仅在“缺失且用户勾选”时释放并安装）
 Source: "E:\xyw\校园网助手\redist\ndp48-x86-x64-allos-enu.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Check: ShouldInstallDotNet
 ; 注：WebView2 完整离线安装包（约 247MB）已随程序打包在 {app}\_internal\redist\ 中，
 ; 无需在此单独引用（目标用户可能无网，必须用离线包，不能用在线引导）
+#endif
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\校园网助手.exe"; Tasks: startmenuicon
@@ -51,10 +68,12 @@ Name: "{group}\卸载 {#MyAppName}"; Filename: "{uninstallexe}"; Tasks: startmen
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\校园网助手.exe"; Tasks: desktopicon
 
 [Run]
+#ifndef LITE
 ; .NET Framework 4.8：缺失且用户勾选时离线静默安装（/norestart 不强制重启）
 Filename: "{tmp}\ndp48-x86-x64-allos-enu.exe"; Parameters: "/q /norestart"; StatusMsg: "正在安装 Microsoft .NET Framework 4.8 运行环境（约 1-3 分钟）..."; Check: ShouldInstallDotNet; Flags: waituntilterminated
 ; WebView2：缺失且用户勾选时，用随包的完整离线安装包静默安装（无需联网）
 Filename: "{app}\_internal\redist\MicrosoftEdgeWebView2RuntimeInstallerX64.exe"; Parameters: "/silent /install"; StatusMsg: "正在安装 Microsoft Edge WebView2 运行环境（约 1 分钟）..."; Check: ShouldInstallWebView2; Flags: waituntilterminated
+#endif
 ; 再启动主程序
 Filename: "{app}\{#MyAppExeName}"; Description: "立即运行 {#MyAppName}"; Flags: nowait postinstall skipifsilent
 
@@ -110,6 +129,7 @@ begin
   Result := True;
   if CurPageID = wpSelectTasks then
   begin
+#ifndef LITE
     if (not IsDotNet48Installed) and (not IsTaskSelected('install_dotnet')) then
     begin
       if MsgBox(
@@ -134,5 +154,19 @@ begin
       else
         Result := False;
     end;
+#else
+    { 精简版不含离线运行库：缺失时直接提醒用户先自行安装，再决定是否继续 }
+    if (not IsDotNet48Installed) or (not IsWebView2Installed) then
+    begin
+      if MsgBox(
+           '这是精简版安装包，不含 .NET Framework 4.8 和 Edge WebView2 运行环境。' #13#10 #13#10
+           + '当前系统缺少其中必需组件，校园网助手可能无法启动。' #13#10
+           + '请联网安装好后再使用本程序（也可下载完整版安装包，可离线自动安装）。' #13#10 #13#10
+           + '是否仍要继续安装？',
+           mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES then
+      else
+        Result := False;
+    end;
+#endif
   end;
 end;

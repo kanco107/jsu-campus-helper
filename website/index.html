@@ -267,6 +267,10 @@ img{max-width:100%; display:block}
   flex-shrink:0;
 }
 @media(max-width:880px){.compare-grid{grid-template-columns:1fr}}
+/* 下载区 3 张卡片（Windows 完整 / Windows 精简 / Android） */
+#download .compare-grid{grid-template-columns:repeat(3,1fr)}
+@media(max-width:1100px){#download .compare-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:880px){#download .compare-grid{grid-template-columns:1fr}}
 
 /* 步骤 */
 .steps{display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin-top:36px}

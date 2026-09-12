@@ -24,3 +24,7 @@ android/local.properties
 # 系统杂项
 .DS_Store
 Thumbs.db
+
+# 上传脚本（双击批处理仅本地保留，不入库；同步脚本直接运行 py 即可）
+上传代码到GitHub.cmd
+上传代码到Gitee.cmd

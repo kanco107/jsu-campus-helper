@@ -7,10 +7,12 @@ import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.provider.Settings
+import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.NetworkInterface
 import java.net.Socket
+import java.net.URL
 
 /**
  * 基于 Java API 的检测项：连接状态、SSID、DNS、系统代理、169.254。
@@ -105,6 +107,130 @@ object NetChecks {
             false
         }
     }
+
+    /** 应用层互联网验证结果 */
+    data class InternetState(
+        val ok: Boolean,        // 是否真的能上互联网
+        val via: String,        // 成功时的验证方式
+        val detail: String,     // 给用户看的结论/证据
+        val portal: Boolean     // 是否明确收到认证门户的劫持响应
+    )
+
+    // 国内厂商的联网检测地址：正常网络返回 HTTP 204；
+    // 未认证时校园网门户会透明劫持 80 端口，返回 200 认证页或 302 跳转到网关 IP。
+    // 不能用 Google 的 connectivitycheck（国内正常网络也访问不通，会误报）。
+    private val HTTP_204_ENDPOINTS = listOf(
+        "http://connect.rom.miui.com/generate_204",
+        "http://connectivitycheck.platform.hicloud.com/generate_204",
+        "http://www.qualcomm.cn/generate_204",
+        "http://wifi.vivo.com.cn/generate_204"
+    )
+
+    // HTTPS 兜底：认证门户无法伪造目标网站的 TLS 证书，握手能成功且响应正常
+    // 就证明端到端互联网是通的（TCP 能连上 + 收到非预期 HTTP 都不算数）。
+    private val HTTPS_ENDPOINTS = listOf(
+        "https://www.baidu.com/",
+        "https://www.qq.com/"
+    )
+
+    private const val PROBE_UA =
+        "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36"
+
+    private sealed class Probe {
+        object Ok : Probe()
+        data class Portal(val evidence: String) : Probe()
+        data class Error(val message: String) : Probe()
+    }
+
+    /**
+     * 应用层互联网验证（绑定 WiFi 网络）。
+     *
+     * 为什么不能用 TCP 握手判断：校园网未认证时，网关为了把浏览器弹到认证页，
+     * 会透明劫持 80 端口——对任意 IP 发 SYN 都会被网关 ACK，Socket.connect
+     * 成功只代表"被门户劫持了"，不代表能上网。必须发起真实 HTTP 请求并校验
+     * 响应（204），或用无法被伪造证书的 HTTPS 验证。
+     */
+    fun checkInternet(ctx: Context): InternetState {
+        val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        // 必须绑定 WiFi 网络：未认证 WiFi + 移动数据同时在线时默认路由走流量，
+        // 不绑定会把"移动数据能上网"误判成"校园 WiFi 能上网"
+        val net = wifiNetwork(ctx) ?: cm.activeNetwork
+            ?: return InternetState(false, "", "当前没有任何可用网络连接", false)
+
+        var portalHint = ""
+        var lastErr = ""
+        for (url in HTTP_204_ENDPOINTS) {
+            when (val r = http204Probe(net, url)) {
+                is Probe.Ok -> return InternetState(true, "HTTP 联网验证", "$url 正常返回 204", false)
+                is Probe.Portal -> {
+                    if (portalHint.isEmpty()) portalHint = r.evidence
+                    lastErr = r.evidence
+                }
+                is Probe.Error -> lastErr = r.message
+            }
+        }
+        for (url in HTTPS_ENDPOINTS) {
+            if (httpsProbe(net, url)) {
+                return InternetState(true, "HTTPS 加密验证", "$url 连接与证书校验正常", false)
+            }
+        }
+        val detail = when {
+            portalHint.isNotEmpty() ->
+                "访问外网被劫持到认证页面（$portalHint），说明校园网尚未登录；" +
+                    "注意“能连上端口/能解析域名”不代表能上网"
+            lastErr.isNotEmpty() ->
+                "所有 HTTP/HTTPS 联网探测均失败（$lastErr），请先完成校园网登录"
+            else -> "无法访问互联网，请先完成校园网登录"
+        }
+        return InternetState(false, "", detail, portalHint.isNotEmpty())
+    }
+
+    /** 单个 204 探测：严格 204 才算通；200/3xx 视为门户劫持证据 */
+    private fun http204Probe(net: Network, urlStr: String): Probe {
+        var conn: HttpURLConnection? = null
+        return try {
+            conn = net.openConnection(URL(urlStr)) as HttpURLConnection
+            conn.connectTimeout = 3000
+            conn.readTimeout = 4000
+            conn.instanceFollowRedirects = false // 不跟随跳转，302 到网关 IP 正是劫持铁证
+            conn.setRequestProperty("User-Agent", PROBE_UA)
+            when (val code = conn.responseCode) {
+                204 -> Probe.Ok
+                in 300..399 -> {
+                    val loc = conn.getHeaderField("Location") ?: ""
+                    Probe.Portal(if (loc.isNotEmpty()) "HTTP $code 跳转至 $loc" else "HTTP $code 重定向")
+                }
+                in 200..299 ->
+                    Probe.Portal("HTTP $code：204 探测地址返回了网页内容，疑似认证页")
+                else -> Probe.Error("HTTP $code")
+            }
+        } catch (e: Exception) {
+            Probe.Error(e.message?.take(80) ?: "连接失败")
+        } finally {
+            conn?.disconnect()
+        }
+    }
+
+    /** HTTPS 验证：默认 TLS 证书校验，门户伪造证书会直接握手失败 */
+    private fun httpsProbe(net: Network, urlStr: String): Boolean {
+        var conn: HttpURLConnection? = null
+        return try {
+            conn = net.openConnection(URL(urlStr)) as HttpURLConnection
+            conn.connectTimeout = 4000
+            conn.readTimeout = 5000
+            conn.instanceFollowRedirects = true
+            conn.setRequestProperty("User-Agent", PROBE_UA)
+            conn.responseCode in 200..399
+        } catch (_: Exception) {
+            false
+        } finally {
+            conn?.disconnect()
+        }
+    }
+
+    /** 仅做 DNS 解析并返回 IP（用于展示）；解析成功不代表能上网（网关可能代答） */
+    fun resolveIp(domain: String): String? =
+        try { InetAddress.getByName(domain).hostAddress } catch (_: Exception) { null }
 
     /** 当前 WiFi 的网关地址（取默认路由的网关，用于与配置网关比对） */
     fun gatewayIp(ctx: Context): String {

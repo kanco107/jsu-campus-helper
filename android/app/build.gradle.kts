@@ -20,8 +20,8 @@ android {
         applicationId = "com.campus.detector"
         minSdk = 29
         targetSdk = 37
-        versionCode = 4
-        versionName = "1.2.2"
+        versionCode = 5
+        versionName = "1.2.3"
     }
 
     if (hasReleaseKeystore) {

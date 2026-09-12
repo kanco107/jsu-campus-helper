@@ -519,14 +519,38 @@ const STATE = {
 };
 
 /* ======================= 后端对接 ======================= */
-function waitBackend(timeout) {
+// 注意：pywebview 在页面早期就注入 window.pywebview = {api: {}}，
+// 但此时 api 是空对象——真正的接口方法要等 finish.js 执行（_createApi）
+// 并派发 pywebviewready 事件后才挂上来。若只判断 window.pywebview.api
+// 是否存在（空对象也是 truthy），WebView2 冷启动时会在桥接就绪前调用
+// 后端方法并抛 TypeError，导致初始化永久中断、界面一直卡在“连接后端”。
+function backendReady() {
+  return !!(window.pywebview && window.pywebview.api &&
+    typeof window.pywebview.api.get_initial_state === "function");
+}
+function waitBackend() {
   return new Promise(resolve => {
+    if (backendReady()) return resolve("pywebview");
+    let done = false;
+    const finish = mode => { if (!done) { done = true; resolve(mode); } };
+    // 官方就绪事件（页面脚本晚于注入时兜底用下面的轮询）
+    window.addEventListener("pywebviewready", () => finish("pywebview"), { once: true });
     const t0 = Date.now();
-    (function check() {
-      if (window.pywebview && window.pywebview.api) return resolve("pywebview");
-      if (Date.now() - t0 > timeout) return resolve("demo");
-      setTimeout(check, 120);
-    })();
+    const timer = setInterval(() => {
+      if (backendReady()) {
+        clearInterval(timer);
+        finish("pywebview");
+      } else if (!window.pywebview && Date.now() - t0 > 3000) {
+        // 纯浏览器打开（api.js 由 WebView2 在文档创建时注入，正常情况下
+        // 页面脚本运行时 window.pywebview 已存在）：进入演示模式
+        clearInterval(timer);
+        finish("demo");
+      } else if (Date.now() - t0 > 30000) {
+        // WebView2 环境但桥接迟迟未就绪：按 pywebview 处理（调用处会重试）
+        clearInterval(timer);
+        finish("pywebview");
+      }
+    }, 150);
   });
 }
 
@@ -1118,14 +1142,42 @@ titlebar.addEventListener("dblclick", e => {
 
 /* ======================= 启动 ======================= */
 (async function init() {
-  const backend = await waitBackend(8000);
+  const backend = await waitBackend();
   if (backend === "demo") {
     STATE.demo = true; STATE.api = makeDemoApi();
     $("#demoChip").classList.remove("hidden");
   } else {
     STATE.api = window.pywebview.api;
   }
-  const st = await STATE.api.get_initial_state();
+  // 桥接刚就绪时首批 RPC 可能丢失（Promise 既不 resolve 也不 reject），
+  // 必须带超时重试，否则一次失败就会永久卡在“正在连接程序后端”
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  let st = null;
+  if (STATE.demo) {
+    st = await STATE.api.get_initial_state();
+  } else {
+    for (let i = 0; i < 30; i++) {
+      try {
+        st = await Promise.race([
+          STATE.api.get_initial_state(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("rpc timeout")), 8000)),
+        ]);
+        break;
+      } catch (e) {
+        await sleep(1000);
+      }
+    }
+  }
+  if (!st) {
+    // 后端始终无响应：给出手动重载入口，不再永久停留在初始化界面
+    setHero("bad", "连接程序后端失败", "界面内核已启动，但程序后端长时间没有响应。请点击下方按钮重新加载；若反复出现，请重启程序。");
+    const rb = document.createElement("button");
+    rb.className = "btn accent big";
+    rb.innerHTML = '<span class="ficon">&#xE72C;</span>重新连接';
+    rb.addEventListener("click", () => location.reload());
+    document.querySelector(".hero-actions").appendChild(rb);
+    return;
+  }
   STATE.config = st.config; STATE.defaults = st.defaults || {};
   STATE.carriers = st.carriers || {}; STATE.is_admin = !!st.is_admin;
   $("#scopeKeyword").textContent = STATE.config.wifi_keyword || "DORM";  // 提示条关键字与设置同步

@@ -6,9 +6,9 @@ window.SITE_DATA = {
   "meta": {
     "title": "校园网助手 · 吉首大学",
     "description": "专为吉首大学校园网环境开发的一键检测与修复工具,支持 Windows 与 Android。",
-    "version": "v1.2.1",
+    "version": "v1.2.3",
     "brand": "校园网助手",
-    "brandTag": "吉首大学 · v1.2.1"
+    "brandTag": "吉首大学 · v1.2.3"
   },
   "nav": {
     "links": [
@@ -48,7 +48,7 @@ window.SITE_DATA = {
       "href": "#features"
     },
     "meta": [
-      "v1.2.1",
+      "v1.2.3",
       "Windows · Android",
       "免费 · 离线"
     ]
@@ -63,11 +63,11 @@ window.SITE_DATA = {
         "specs": [
           [
             "版本",
-            "v1.2.1"
+            "v1.2.3"
           ],
           [
             "大小",
-            "≈ 376 MB"
+            "≈ 378 MB（完整版）"
           ],
           [
             "系统要求",
@@ -86,10 +86,10 @@ window.SITE_DATA = {
             "管理员(修复网络需)"
           ]
         ],
-        "fileName": "Windows_v1.2.1_setup.exe",
+        "fileName": "Windows_v1.2.3_setup.exe",
         "btnText": "下载 Windows 安装包",
         "btnStyle": "primary",
-        "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.2/Windows_v1.2.1_setup.exe",
+        "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.3/Windows_v1.2.3_setup.exe",
         "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=vee26jeiymyq", "code": "ekx2" }
       },
       {
@@ -98,7 +98,7 @@ window.SITE_DATA = {
         "specs": [
           [
             "版本",
-            "v1.2.2 (code 4)"
+            "v1.2.3 (code 5)"
           ],
           [
             "大小",
@@ -121,10 +121,10 @@ window.SITE_DATA = {
             "仅网络权限,无系统修改"
           ]
         ],
-        "fileName": "校园网助手v1.2.2.apk",
+        "fileName": "Android_v1.2.3.apk",
         "btnText": "下载 Android APK",
         "btnStyle": "accent",
-        "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.2/Android_v1.2.2.apk",
+        "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.3/Android_v1.2.3.apk",
         "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=iQvmiyryYrau", "code": "0stb" }
       }
     ]
@@ -290,36 +290,51 @@ window.SITE_DATA = {
   },
   "download": {
     "eyebrow": "下载",
-    "title": "下载 v1.2.1",
+    "title": "下载 v1.2.3",
     "cards": [
       {
-        "title": "Windows 桌面版",
-        "intro": "安装包里带了 .NET 4.8 和 WebView2 离线包,装的时候不用联网。",
+        "title": "Windows 完整版",
+        "intro": "安装包里带了 .NET 4.8 和 WebView2 离线包,装的时候不用联网,适合新装机或不确定有没有运行库的电脑。",
         "specs": [
-          "版本 v1.2.1",
-          "文件大小 ≈ 376 MB(含运行时)",
+          "版本 v1.2.3",
+          "文件大小 ≈ 378 MB(含运行时)",
           "支持 Windows 10 及以上",
           "需要管理员权限"
         ],
-        "fileName": "Windows_v1.2.1_setup.exe",
-        "btnText": "下载",
+        "fileName": "Windows_v1.2.3_setup.exe",
+        "btnText": "下载完整版",
         "btnStyle": "primary",
-        "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.2/Windows_v1.2.1_setup.exe",
+        "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.3/Windows_v1.2.3_setup.exe",
+        "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=vee26jeiymyq", "code": "ekx2" }
+      },
+      {
+        "title": "Windows 精简版",
+        "intro": "不含 .NET 4.8 和 WebView2 离线包,只有约 16 MB。系统已自带这两个运行库、或能联网安装时选这个。",
+        "specs": [
+          "版本 v1.2.3",
+          "文件大小 ≈ 16 MB(不含运行时)",
+          "支持 Windows 10 及以上",
+          "需要管理员权限"
+        ],
+        "fileName": "Windows_v1.2.3_lite_setup.exe",
+        "btnText": "下载精简版",
+        "btnStyle": "primary",
+        "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.3/Windows_v1.2.3_lite_setup.exe",
         "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=vee26jeiymyq", "code": "ekx2" }
       },
       {
         "title": "Android 检测版",
         "intro": "只检测不改系统,只要网络权限。装时可能提示\"未知来源\",允许就行。",
         "specs": [
-          "版本 v1.2.2 (versionCode 4)",
+          "版本 v1.2.3 (versionCode 5)",
           "文件大小 ≈ 3.1 MB",
           "支持 Android 10 及以上",
           "无需 root,无需特殊权限"
         ],
-        "fileName": "校园网助手v1.2.2.apk",
+        "fileName": "Android_v1.2.3.apk",
         "btnText": "下载",
         "btnStyle": "accent",
-        "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.2/Android_v1.2.2.apk",
+        "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.3/Android_v1.2.3.apk",
         "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=iQvmiyryYrau", "code": "0stb" }
       }
     ],
@@ -341,8 +356,8 @@ window.SITE_DATA = {
         "a": "Windows 版改网络设置(IP、DNS、代理这些)得管理员权限。所有改动都有记录,可以一键撤销。Android 版只检测,不动系统。"
       },
       {
-        "q": "安装包 376MB 太大了吧?",
-        "a": "因为带了 .NET 4.8 和 WebView2 离线包,装的时候不用联网。你电脑要是已经有这两样,装完程序本身大概 80MB。"
+        "q": "安装包 378MB 太大了吧?",
+        "a": "完整版因为带了 .NET 4.8 和 WebView2 离线包,装的时候不用联网,适合新装机。你电脑要是已经有这两样(Win10 较新版本一般自带),下载 16MB 的精简版就行,程序本体只有几十 MB。"
       },
       {
         "q": "支持别的学校吗?",

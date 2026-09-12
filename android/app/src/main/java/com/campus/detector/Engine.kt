@@ -62,14 +62,18 @@ class Engine(private val ctx: Context) {
                 }
                 Events.post("checksInit", mapOf("checks" to initArr))
 
+                // 应用层互联网验证（204/HTTPS，绑定 WiFi）只执行一次，
+                // “网络连接/外网连通/域名解析”三项共用同一份结果，避免重复探测
+                val internetDef = async { NetChecks.checkInternet(ctx) }
+
                 // 并行执行基础检测，各检查项完成后立即推送自己的结果
                 val baseJobs = listOf(
-                    async { runCheck(results, "connection") { checkConnection(ctx, cfg) } },
+                    async { runCheck(results, "connection") { checkConnection(ctx, internetDef.await()) } },
                     async { runCheck(results, "wifi") { checkWifi(ctx, cfg) } },
                     async { runCheck(results, "signal") { checkSignal(ctx) } },
                     async { runCheck(results, "intranet") { checkIntranet(ctx, cfg) } },
-                    async { runCheck(results, "external") { checkExternal(cfg) } },
-                    async { runCheck(results, "dns") { checkDns(cfg) } },
+                    async { runCheck(results, "external") { checkExternal(ctx, cfg, internetDef.await()) } },
+                    async { runCheck(results, "dns") { checkDns(cfg, internetDef.await()) } },
                     async { runCheck(results, "proxy") { checkProxy(ctx) } },
                     async { runCheck(results, "linklocal") { checkLinkLocal() } }
                 )
@@ -95,10 +99,10 @@ class Engine(private val ctx: Context) {
     }
 
     /** 单项检测执行器：捕获所有异常，保证一项失败不影响其它项 */
-    private fun runCheck(
+    private suspend fun runCheck(
         results: ConcurrentHashMap<String, JSONObject>,
         key: String,
-        body: () -> Pair<String, String>
+        body: suspend () -> Pair<String, String>
     ) {
         val title = titleMap[key] ?: key
         val card = try {
@@ -115,19 +119,19 @@ class Engine(private val ctx: Context) {
 
     // ---------- 各检测项 ----------
 
-    private fun checkConnection(ctx: Context, cfg: JSONObject): Pair<String, String> {
+    private fun checkConnection(
+        ctx: Context,
+        internet: NetChecks.InternetState
+    ): Pair<String, String> {
         val s = NetChecks.connectionState(ctx)
         if (s.status != "ok") return Pair(s.status, s.detail)
-        // 有网的话顺手 ping 一个域名，给用户直观的"网络正常"反馈
-        // 移动数据劫持提示已独立为顶部警告条,不再塞进本卡片,避免"绿色对勾+警告文字"造成误判
-        val host = cfg.optString("public_test_host")
-        val pr = Ping.ping(host, 2, 2)
-        return if (pr.ok) {
-            Pair("ok", "${s.detail}；$host 可达（${pr.detail}）")
-        } else if (Ping.tcpProbe(host, 80)) {
-            Pair("ok", "${s.detail}；$host 可达（ICMP 被禁，TCP 端口确认）")
+        // 移动数据劫持提示已独立为顶部警告条，不塞进本卡片，避免"绿色对勾+警告文字"误判。
+        // 能否上互联网只认应用层验证（204/HTTPS）：未认证时网关会 ACK 任意 IP 的
+        // 80 端口连接，TCP 握手成功不代表能上网，旧逻辑因此把未登录报成"通过"。
+        return if (internet.ok) {
+            Pair("ok", "${s.detail}；互联网访问正常（${internet.via}）")
         } else {
-            Pair("warn", "${s.detail}；但无法访问公网 $host（可能处于受限网络环境）")
+            Pair("warn", "${s.detail}；但实测无法访问互联网。${internet.detail}")
         }
     }
 
@@ -136,7 +140,12 @@ class Engine(private val ctx: Context) {
         if (ssid.isEmpty()) return Pair("skip", detail)
         // 是否校园网以"能否连通校园网网关"为准，避免连了任意 WiFi 都判为通过
         val gateway = cfg.optString("gateway")
-        val gwReachable = Ping.ping(gateway, 2, 2).ok || Ping.tcpProbe(gateway, 80)
+        // TCP 回退优先绑定 WiFi 网络：移动数据劫持时默认路由走流量，
+        // 未绑定的 tcpProbe 到校园网关必然超时
+        val gwTcpOk = NetChecks.wifiNetwork(ctx)?.let {
+            NetChecks.tcpProbeOnNetwork(it, gateway, 80)
+        } ?: Ping.tcpProbe(gateway, 80)
+        val gwReachable = Ping.ping(gateway, 2, 2).ok || gwTcpOk
         val keyword = cfg.optString("wifi_keyword", "DORM").uppercase()
         val isCampusSsid = keyword.isNotEmpty() && ssid.uppercase().contains(keyword)
         return when {
@@ -217,16 +226,29 @@ class Engine(private val ctx: Context) {
         )
     }
 
-    private fun checkExternal(cfg: JSONObject): Pair<String, String> {
+    private fun checkExternal(
+        ctx: Context,
+        cfg: JSONObject,
+        internet: NetChecks.InternetState
+    ): Pair<String, String> {
         val host = cfg.optString("public_test_host")
-        val count = cfg.optInt("ping_count", 2)
-        val timeout = cfg.optInt("ping_timeout", 2)
-        val r = Ping.ping(host, count, timeout)
-        if (r.ok) return Pair("ok", "互联网可达（$host ${r.detail}）")
-        if (Ping.tcpProbe(host, 80)) {
-            return Pair("ok", "互联网可达（ICMP 被禁用，经 TCP 端口确认）")
+        // ICMP 成功是可靠的联网证据；但移动数据劫持场景下 ping 走流量通道，
+        // 会把"流量能上网"误判成"校园 WiFi 已通"，此时跳过默认路由的 ping，
+        // 只认绑定 WiFi 的应用层验证结果
+        if (!NetChecks.isCellularHijackingWifi(ctx)) {
+            val count = cfg.optInt("ping_count", 2)
+            val timeout = cfg.optInt("ping_timeout", 2)
+            val r = Ping.ping(host, count, timeout)
+            if (r.ok) return Pair("ok", "互联网可达（$host ${r.detail}）")
         }
-        return Pair("fail", "无法访问互联网（$host 不可达：校园网未认证或网络故障）")
+        // ICMP 不通时绝不能用裸 TCP 80 握手兜底：未认证网关会透明劫持 80 端口，
+        // 对任意 IP 的连接都 ACK，旧逻辑因此把未登录报成"互联网可达"。
+        // 改用真实 HTTP 204 / HTTPS 证书验证（已绑定 WiFi 网络）。
+        return if (internet.ok) {
+            Pair("ok", "互联网可达（${internet.via}，ICMP 可能被禁）")
+        } else {
+            Pair("fail", "无法访问互联网：${internet.detail}")
+        }
     }
 
     private fun checkAuth(cfg: JSONObject, results: ConcurrentHashMap<String, JSONObject>): Pair<String, String> {
@@ -255,18 +277,31 @@ class Engine(private val ctx: Context) {
         }
     }
 
-    private fun checkDns(cfg: JSONObject): Pair<String, String> {
-        // DNS 结果需要结合外网连通性解读：外网都不通时解析失败是正常现象，
-        // 因此这里先探一次外网再决定是 fail 还是 skip（避免误报吓到用户）
+    private fun checkDns(
+        cfg: JSONObject,
+        internet: NetChecks.InternetState
+    ): Pair<String, String> {
+        // 关键：DNS“能解析”不等于“能上网”。校园网未认证时网关的 DNS 仍然
+        // 会应答（甚至代答），InetAddress.getByName 照样返回真实 IP，旧逻辑
+        // 据此把未登录场景报成“域名解析通过”。必须结合应用层联网验证解读：
         val domain = cfg.optString("test_domain")
-        val (status, detail) = NetChecks.dnsResolve(domain)
-        if (status == "ok") return Pair("ok", detail)
-        val host = cfg.optString("public_test_host")
-        val extOk = Ping.ping(host, 1, 2).ok || Ping.tcpProbe(host, 80)
-        return if (extOk) {
-            Pair("fail", detail)
-        } else {
-            Pair("skip", "无法解析域名（当前无法访问互联网，认证后再试）")
+        val ip = NetChecks.resolveIp(domain)
+        return when {
+            internet.ok && ip != null ->
+                Pair("ok", "$domain 解析正常 → $ip，网站可实际访问")
+            internet.ok ->
+                Pair(
+                    "fail",
+                    "互联网可达但无法解析 $domain（DNS 服务异常，可尝试切换 DNS 或重启 WiFi）"
+                )
+            ip != null ->
+                Pair(
+                    "warn",
+                    "$domain 能解析出 IP（$ip），但未认证时网关会代答 DNS，" +
+                        "解析成功不代表能上网，请先完成校园网登录"
+                )
+            else ->
+                Pair("skip", "无法解析域名（当前无法访问互联网，认证后再试）")
         }
     }
 

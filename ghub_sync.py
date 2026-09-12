@@ -34,7 +34,9 @@ SKIP_DIRS = (".git/", "__pycache__/", "windows/redist/",
              "android/.gradle/", "android/app/build/")
 SKIP_FILES = {"deploy_config.json", ".DS_Store", "Thumbs.db",
               ".ghub_blob_cache.json", "android/keystore.properties",
-              "android/local.properties"}
+              "android/local.properties",
+              # 双击上传批处理只保留本地，禁止同步到公开仓库（即使文件被误放回来）
+              "上传代码到GitHub.cmd", "上传代码到Gitee.cmd"}
 SKIP_EXT = {".pyc", ".jks", ".keystore"}
 
 MODE_PLAIN = "100644"
