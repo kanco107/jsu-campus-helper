@@ -598,11 +598,11 @@ function renderSteps(){
 
 function renderDownload(){
   const d = D.download || {};
-  const cards = (d.cards || []).map(card => {
+  const cards = (d.cards || []).map((card, idx) => {
     const style = card.btnStyle === 'accent' ? 'btn--accent' : 'btn--primary';
     const lis = (card.specs || []).map(s => `<li>${esc(s)}</li>`).join('');
     const icon = card.title === 'Windows 桌面版' ? ICONS.win : ICONS.android;
-    const key = card.title.includes('Windows') ? 'windows' : 'android';
+    const key = card.fileName || ('nd-' + idx);
     let ndBtn = '';
     if(card.netdisk){
       ND_REGISTRY[key] = card.netdisk;

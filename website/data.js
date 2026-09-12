@@ -90,7 +90,7 @@ window.SITE_DATA = {
         "btnText": "下载 Windows 安装包",
         "btnStyle": "primary",
         "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.3/Windows_v1.2.3_setup.exe",
-        "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=vee26jeiymyq", "code": "ekx2" }
+        "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=qANJ3mbqyqqm", "code": "j62g" }
       },
       {
         "key": "android",
@@ -125,7 +125,7 @@ window.SITE_DATA = {
         "btnText": "下载 Android APK",
         "btnStyle": "accent",
         "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.3/Android_v1.2.3.apk",
-        "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=iQvmiyryYrau", "code": "0stb" }
+        "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=Qb6feyvqqUje", "code": "6jev" }
       }
     ]
   },
@@ -305,7 +305,7 @@ window.SITE_DATA = {
         "btnText": "下载完整版",
         "btnStyle": "primary",
         "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.3/Windows_v1.2.3_setup.exe",
-        "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=vee26jeiymyq", "code": "ekx2" }
+        "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=qANJ3mbqyqqm", "code": "j62g" }
       },
       {
         "title": "Windows 精简版",
@@ -320,7 +320,7 @@ window.SITE_DATA = {
         "btnText": "下载精简版",
         "btnStyle": "primary",
         "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.3/Windows_v1.2.3_lite_setup.exe",
-        "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=vee26jeiymyq", "code": "ekx2" }
+        "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=ZbYBFnfAjyui", "code": "8map" }
       },
       {
         "title": "Android 检测版",
@@ -335,7 +335,7 @@ window.SITE_DATA = {
         "btnText": "下载",
         "btnStyle": "accent",
         "downloadUrl": "https://github.com/kanco107/jsu-campus-helper/releases/download/v1.2.3/Android_v1.2.3.apk",
-        "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=iQvmiyryYrau", "code": "0stb" }
+        "netdisk": { "label": "天翼云盘", "url": "https://cloud.189.cn/web/share?code=Qb6feyvqqUje", "code": "6jev" }
       }
     ],
     "warnBanner": {
